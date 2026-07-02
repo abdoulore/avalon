@@ -378,11 +378,23 @@ textarea { min-height: 92px; resize: vertical; }
    LANDING (dark "money-in-motion") — ambient helpers
    Scoped under .av so none of it leaks into the app pages.
    ============================================================ */
-.av { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+.av { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; color-scheme: dark; }
 .av ::selection { background: rgba(52, 211, 153, 0.25); color: #ecfdf5; }
 /* Preflight is off (to protect app pages), so zero browser default margins here. */
 .av :where(h1, h2, h3, h4, h5, p, figure, ul, ol) { margin: 0; }
 .av :where(ul, ol) { list-style: none; padding: 0; }
+
+/* Form-control reset (preflight is off). Without it, buttons/inputs lacking an
+   explicit bg-* class fall back to the browser's LIGHT form styling — light
+   pills with light text, invisible on the dark theme. Low-specificity :where()
+   so every Tailwind utility class still wins. */
+.av :where(button, input, select, textarea) {
+  background-color: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+}
+.av :where(button) { border: 0; cursor: pointer; }
 
 /* faint engineering grid behind the hero */
 .av-grid {

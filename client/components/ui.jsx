@@ -1,6 +1,8 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
+import { useState } from "react";
+import { KeyRound, RefreshCw } from "lucide-react";
+import { getAdminToken, setAdminToken } from "../lib/api";
 
 // Shared dark UI primitives for the app pages, matching the landing language:
 // near-black surfaces, one emerald accent, mono tabular numerics.
@@ -101,6 +103,31 @@ export function RefreshButton({ onClick, busy = false, label = "Refresh", classN
       <RefreshCw size={15} className={`text-brand ${busy ? "av-spin" : ""}`} />
       {label}
     </button>
+  );
+}
+
+// Input for the admin token gating publish + on-chain deposits. Stored in
+// sessionStorage (lib/api attaches it as x-admin-token automatically).
+export function AdminTokenField({ hint = "Required for this action." }) {
+  const [token, setToken] = useState(() => getAdminToken());
+  return (
+    <label className="grid gap-1.5 text-sm">
+      <span className="flex items-center gap-1.5 font-medium text-zinc-400">
+        <KeyRound size={13} /> Admin token
+      </span>
+      <input
+        className={INPUT}
+        type="password"
+        autoComplete="off"
+        placeholder="admin token"
+        value={token}
+        onChange={(e) => {
+          setToken(e.target.value);
+          setAdminToken(e.target.value.trim());
+        }}
+      />
+      <span className="text-[11px] text-zinc-600">{hint}</span>
+    </label>
   );
 }
 

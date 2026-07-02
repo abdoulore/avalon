@@ -3,7 +3,7 @@
 import { Check, Copy, CreditCard, ExternalLink, Loader2, Wallet } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "../../components/AppShell";
-import { Card, BTN, RefreshButton } from "../../components/ui";
+import { AdminTokenField, Card, BTN, RefreshButton } from "../../components/ui";
 import { api, formatMoney } from "../../lib/api";
 import { usePaymentMode } from "../../hooks/usePaymentMode";
 import { addressUrl, isTxHash, txUrl } from "../../lib/explorer";
@@ -204,7 +204,11 @@ function GatewayDeposit() {
         </span>
       </div>
 
-      <button className={`${BTN} mt-5 w-full py-3`} type="button" onClick={deposit} disabled={busy || amount <= 0}>
+      <div className="mt-4">
+        <AdminTokenField hint="Depositing moves funds from the project wallet - admin token required." />
+      </div>
+
+      <button className={`${BTN} mt-4 w-full py-3`} type="button" onClick={deposit} disabled={busy || amount <= 0}>
         {busy ? (
           <>
             <Loader2 size={16} className="av-spin" /> Depositing on-chain…

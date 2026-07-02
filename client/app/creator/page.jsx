@@ -3,7 +3,7 @@
 import { BookOpen, Film, Save, Sparkles, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AppShell } from "../../components/AppShell";
-import { Card, StatTile, Table, Row, Td, Field, INPUT, BTN, RefreshButton, SectionHeading } from "../../components/ui";
+import { AdminTokenField, Card, StatTile, Table, Row, Td, Field, INPUT, BTN, RefreshButton, SectionHeading } from "../../components/ui";
 import { api, formatMoney } from "../../lib/api";
 import { usePaymentMode } from "../../hooks/usePaymentMode";
 
@@ -200,6 +200,10 @@ export default function CreatorPage() {
                     <option value="yes">Yes</option>
                   </select>
                 </Field>
+
+                <div className="sm:col-span-2">
+                  <AdminTokenField hint="Publishing to the shared catalog requires the admin token." />
+                </div>
 
                 <div className="sm:col-span-2">
                   <button className={BTN} type="submit">

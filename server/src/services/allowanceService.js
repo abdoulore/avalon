@@ -14,8 +14,7 @@ import { roundMoney } from "../payments/paymentAdapter.js";
  * atomic at the edge (reuse toUsdcAtomic from circleGatewayService.js); the API
  * layer converts atomic -> display dollars on the way out.
  *
- * The race-safety is the same trick MockPaymentAdapter.chargeUsage uses for
- * balanceUsd: a single findOneAndUpdate whose query guards the invariant, so
+ * Race-safety: a single findOneAndUpdate whose query guards the invariant, so
  * MongoDB's per-document atomicity serializes concurrent draws. There is no
  * read-then-write window for two heartbeats to overspend the cap.
  */
@@ -39,8 +38,7 @@ export class AllowanceService {
 
   // Atomic drawdown in integer atomic units. Succeeds only if the remaining
   // allowance covers `amountAtomic`. The $expr guard (spent + amt <= cap) is
-  // evaluated by MongoDB inside the same atomic match+update as the $inc,
-  // mirroring the balanceUsd $gte guard in paymentAdapter.chargeUsage.
+  // evaluated by MongoDB inside the same atomic match+update as the $inc.
   async draw({ sessionId, amountAtomic }) {
     const amt = Math.round(Number(amountAtomic) || 0);
     if (amt <= 0) {

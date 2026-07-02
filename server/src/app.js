@@ -8,7 +8,6 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { conciergeRouter } from "./routes/conciergeRoutes.js";
 import { contentRouter } from "./routes/contentRoutes.js";
 import { ledgerRouter } from "./routes/ledgerRoutes.js";
-import { paymentRouter } from "./routes/paymentRoutes.js";
 import { usageRouter } from "./routes/usageRoutes.js";
 import { userRouter } from "./routes/userRoutes.js";
 
@@ -57,7 +56,6 @@ app.get("/api/config", (req, res) => {
 app.use("/api/content", wrapRouter(contentRouter));
 app.use("/api/concierge", wrapRouter(conciergeRouter));
 app.use("/api/ledger", wrapRouter(ledgerRouter));
-app.use("/api", wrapRouter(paymentRouter));
 app.use("/api/users", wrapRouter(userRouter));
 app.use("/api/usage", wrapRouter(usageRouter));
 

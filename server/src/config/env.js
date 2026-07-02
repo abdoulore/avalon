@@ -12,6 +12,9 @@ export const env = {
   mongoUri: process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/avalon",
   clientOrigin: process.env.CLIENT_ORIGIN || "http://localhost:3000",
   paymentMode: process.env.PAYMENT_MODE || "mock",
+  // Gates content publishing + on-chain deposits (x-admin-token header).
+  // Fail-closed: when unset, those endpoints return 503.
+  adminToken: process.env.ADMIN_TOKEN || "",
   circleApiKey: process.env.CIRCLE_API_KEY || "",
   circleGatewayBaseUrl: process.env.CIRCLE_GATEWAY_BASE_URL || "https://gateway-api-testnet.circle.com",
   circleGatewayEnv: process.env.CIRCLE_GATEWAY_ENV || "testnet",

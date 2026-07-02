@@ -83,46 +83,6 @@ export class CircleGatewayService {
     };
   }
 
-  async verifyPayment({ paymentPayload, paymentRequirements }) {
-    if (env.paymentMode !== "circle") {
-      return {
-        isValid: true,
-        payer: "mock-user",
-        circlePaymentId: `mock_${crypto.randomUUID()}`,
-        gatewayStatus: "mock_verified",
-      };
-    }
-
-    // Circle mode must be configured to settle. Previously this fell back to a
-    // "development proof" that just compared amounts and returned isValid:true —
-    // a fail-open that masked a misconfigured circle deploy as a real settlement.
-    // Now it fails loudly so the misconfiguration surfaces.
-    if (!env.circleApiKey) {
-      return {
-        isValid: false,
-        invalidReason: "Circle mode is not configured: set CIRCLE_API_KEY (or run PAYMENT_MODE=mock).",
-        gatewayStatus: "circle_unconfigured",
-      };
-    }
-
-    const settlement = await this.facilitator.settle(paymentPayload, paymentRequirements.accepts[0]);
-    if (!settlement.success) {
-      return {
-        isValid: false,
-        invalidReason: settlement.errorReason || "Gateway settlement failed",
-        gatewayStatus: "settle_failed",
-      };
-    }
-
-    return {
-      isValid: true,
-      invalidReason: "",
-      payer: settlement.payer,
-      circlePaymentId: settlement.transaction || crypto.randomUUID(),
-      gatewayStatus: "settled",
-    };
-  }
-
   // Build + sign ONE EIP-3009 authorization with a CALLER-PROVIDED nonce. The
   // nonce is owned by the settlement claim so it stays stable across retries
   // (BatchEvmScheme generates its own random nonce, which we cannot reuse).

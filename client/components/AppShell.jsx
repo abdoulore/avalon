@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { BarChart3, BookOpen, Clapperboard, CreditCard, Menu, Receipt, Sparkles, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePaymentMode } from "../hooks/usePaymentMode";
+import { WakeBanner } from "./WakeBanner";
 
 const LINKS = [
   { href: "/discover", label: "Discover", Icon: Sparkles },
@@ -106,6 +107,7 @@ export function AppShell({ children }) {
       </header>
 
       <main className="mx-auto max-w-[1200px] px-5 pb-24 pt-24 sm:px-8">{children}</main>
+      <WakeBanner />
     </div>
   );
 }

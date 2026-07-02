@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "../../components/AppShell";
 import { StatTile, ModeChip, RefreshButton } from "../../components/ui";
 import { api, formatMoney } from "../../lib/api";
-import { addressUrl, isTxHash, shortHash, txUrl } from "../../lib/explorer";
+import { addressUrl, GATEWAY_WALLET_ADDRESS, isTxHash, shortHash, txUrl } from "../../lib/explorer";
 
 export default function TransactionsPage() {
   const [data, setData] = useState(null);
@@ -177,8 +177,24 @@ function TxCard({ tx, circle, explorerUrl }) {
 
           {circle && !onchainHash ? (
             <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
-              Settled through Circle Gateway. The EVM tx hash posts when the batch flushes on-chain; verify the wallet
-              activity via the payer address above.
+              Accepted by Circle Gateway, which folds many signed authorizations into periodic on-chain batches.
+              Individual transfers inside a batch are not separately visible on the explorer{" "}
+              {explorerUrl ? (
+                <>
+                  — the batching pipeline itself is:{" "}
+                  <a
+                    href={addressUrl(explorerUrl, GATEWAY_WALLET_ADDRESS)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-zinc-500 underline underline-offset-2 transition-colors hover:text-brand"
+                  >
+                    GatewayWallet activity
+                  </a>
+                  .
+                </>
+              ) : (
+                "by design."
+              )}
             </p>
           ) : null}
         </div>

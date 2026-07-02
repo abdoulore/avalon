@@ -87,6 +87,7 @@ export default function CreatorPage() {
             <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-zinc-400">
               Publish once, then earn every second watched and every page read. You keep {creatorPct}%, settled per batch.
             </p>
+            <p className="mt-1 text-[12px] text-zinc-600">Demo instance: stats aggregate all usage on this deployment.</p>
           </div>
           <RefreshButton onClick={load} busy={loading} />
         </header>

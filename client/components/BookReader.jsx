@@ -256,6 +256,10 @@ export function BookReader({ content, user, onBalanceChange }) {
           </button>
         </div>
 
+        <p className="mt-2 text-[11.5px] text-zinc-600">
+          Each page bills once; pages you{"'"}ve already paid for stay free to revisit this session.
+        </p>
+
         <button
           className="mt-3 text-sm text-zinc-500 underline-offset-4 transition-colors hover:text-zinc-300 hover:underline"
           onClick={completeSession}

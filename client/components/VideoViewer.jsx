@@ -328,6 +328,9 @@ export function VideoViewer({ content, user, onBalanceChange }) {
             )}{" "}
             · <span className="text-zinc-300">{status}</span>
           </p>
+          <p className="mt-1.5 text-[11.5px] text-zinc-600">
+            Billed per second of playback. Pausing costs nothing; rewatching a scene bills again.
+          </p>
         </div>
 
         {error && !needsExtend ? (

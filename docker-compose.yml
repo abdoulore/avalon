@@ -1,0 +1,12 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: avalon-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - avalon-mongo-data:/data/db
+
+volumes:
+  avalon-mongo-data:

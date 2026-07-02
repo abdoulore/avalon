@@ -1,0 +1,49 @@
+# --- Dependencies ---
+node_modules/
+docs/
+.claude/
+
+# --- Build output & caches ---
+.next/
+out/
+dist/
+build/
+.turbo/
+.vercel/
+*.tsbuildinfo
+
+# --- Secrets & environment ---
+# Ignore all .env files but keep the committed *.example templates.
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Never commit Circle API keys, wallet keys, or entity-secret recovery material.
+*.pem
+*.key
+*entity-secret*
+*recovery*
+server/recovery/
+
+# --- Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Stray local artifacts ---
+*.zip
+coverage/
+
+# --- Local tooling ---
+# Keep shared .claude/settings.json; ignore per-developer local settings.
+.claude/settings.local.json
+
+# --- OS & editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

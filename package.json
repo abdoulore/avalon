@@ -1,0 +1,29 @@
+{
+  "name": "avalon",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Usage-based entertainment MVP with mock USD/USDC balances and future Arc nanopayments hooks.",
+  "engines": {
+    "node": ">=20 <25",
+    "npm": ">=10"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace server\" \"npm run dev --workspace client\"",
+    "dev:client": "npm run dev --workspace client",
+    "dev:server": "npm run dev --workspace server",
+    "build": "npm run build --workspace client",
+    "start": "npm run start --workspace server",
+    "install:all": "npm install --workspaces"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "spawn-command": "^0.0.2",
+    "whatwg-url": "^14.2.0"
+  }
+}

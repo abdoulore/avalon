@@ -247,9 +247,6 @@ function GatewayDeposit() {
         </div>
       ) : null}
 
-      <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.12em] text-zinc-600">
-        also available as: node src/scripts/gatewayDeposit.js {amount.toFixed(2)}
-      </p>
     </Card>
   );
 }

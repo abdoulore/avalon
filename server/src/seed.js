@@ -51,7 +51,10 @@ const user = await User.create({
   currency: "USDC",
 });
 
-const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+// Seeded content belongs to the demo account (creatorName keeps the real
+// author for display): the demo login doubles as the creator-side demo, so
+// its dashboard shows the whole catalog's earnings.
+const demoCreatorId = String(user._id);
 
 // Every video is a real, full-length film on the public internet (Blender open
 // movies, CC-BY; plus public-domain classics). Title, cover, runtime, and the
@@ -86,7 +89,7 @@ const VIDEOS = [
 
 const videoDocs = VIDEOS.map(([title, creatorName, description, durationLabel, id, mediaUrl, pricePerSecondUsd, isPremium]) => ({
   title,
-  creatorId: slug(creatorName),
+  creatorId: demoCreatorId,
   creatorName,
   type: "video",
   description,
@@ -106,7 +109,7 @@ const booksPath = path.join(__dirname, "data", "books.json");
 const booksData = fs.existsSync(booksPath) ? JSON.parse(fs.readFileSync(booksPath, "utf8")) : [];
 const bookDocs = booksData.map((b) => ({
   title: b.title,
-  creatorId: slug(b.author),
+  creatorId: demoCreatorId,
   creatorName: b.author,
   type: "book",
   description: SYNOPSIS[b.gutenbergId] || `${b.title} by ${b.author}. Public-domain edition via Project Gutenberg.`,

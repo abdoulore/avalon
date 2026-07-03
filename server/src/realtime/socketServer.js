@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { ensureDemoUser } from "../controllers/userController.js";
+import { resolveUserFromToken } from "../middleware/userAuth.js";
 import { UsageSession } from "../models/UsageSession.js";
 import { meterService } from "../services/meterService.js";
 import { sessionService } from "../services/sessionService.js";
@@ -11,11 +11,22 @@ export function attachSocketServer(httpServer, { corsOrigin }) {
     cors: { origin: corsOrigin },
   });
 
+  // Billing sessions belong to the authenticated user, so the socket itself
+  // must be authenticated: the client sends its bearer token in the handshake
+  // (`auth.token`), and an unauthenticated connection is refused outright.
+  io.use(async (socket, next) => {
+    const user = await resolveUserFromToken(socket.handshake.auth?.token);
+    if (!user) {
+      return next(new Error("Sign in required."));
+    }
+    socket.data.userId = user._id;
+    next();
+  });
+
   io.on("connection", (socket) => {
     socket.on("session:start", async ({ contentId, capAtomic }, callback) => {
       try {
-        const user = await ensureDemoUser();
-        const result = await sessionService.startOrResume({ userId: user._id, contentId, capAtomic });
+        const result = await sessionService.startOrResume({ userId: socket.data.userId, contentId, capAtomic });
         const sessionId = String(result.usageSession._id);
         socket.join(sessionId);
         socket.data.sessions = socket.data.sessions || new Set();

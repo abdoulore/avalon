@@ -10,7 +10,7 @@ export function getApiUrl() {
   return "http://localhost:4000/api";
 }
 
-// Admin token for the gated endpoints (publish, on-chain deposit). Kept in
+// Admin token for the gated endpoints (on-chain deposit). Kept in
 // sessionStorage only — never in code or the bundle; sent as x-admin-token.
 const ADMIN_TOKEN_KEY = "avalon-admin-token";
 
@@ -25,12 +25,29 @@ export function setAdminToken(value) {
   else window.sessionStorage.removeItem(ADMIN_TOKEN_KEY);
 }
 
+// User auth token (Bearer). localStorage, not a cookie: the client and API are
+// on different sites in production, where cross-site cookies don't survive.
+const AUTH_TOKEN_KEY = "avalon-auth-token";
+
+export function getAuthToken() {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(AUTH_TOKEN_KEY) || "";
+}
+
+export function setAuthToken(value) {
+  if (typeof window === "undefined") return;
+  if (value) window.localStorage.setItem(AUTH_TOKEN_KEY, value);
+  else window.localStorage.removeItem(AUTH_TOKEN_KEY);
+}
+
 export async function api(path, options = {}) {
   const adminToken = getAdminToken();
+  const authToken = getAuthToken();
   const response = await fetch(`${getApiUrl()}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...(adminToken ? { "x-admin-token": adminToken } : {}),
       ...(options.headers || {}),
     },

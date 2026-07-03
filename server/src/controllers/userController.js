@@ -7,12 +7,11 @@ import { paymentService } from "../services/paymentService.js";
 import { gatewayDepositService } from "../services/gatewayDepositService.js";
 import { reservationService } from "../services/reservationService.js";
 
-export async function getDemoUser(req, res) {
-  const user = await ensureDemoUser();
-  res.json({ user });
+export async function getMe(req, res) {
+  res.json({ user: req.user });
 }
 
-export async function topUpDemoUser(req, res) {
+export async function topUpMe(req, res) {
   // Top-up credits the local mock balance. It has no meaning in circle mode,
   // where funds come from an on-chain Gateway deposit — so reject it there
   // instead of silently mutating a balance the circle flow never reads.
@@ -21,13 +20,12 @@ export async function topUpDemoUser(req, res) {
       error: "Top-up is only available in mock mode. In circle mode, deposit on-chain via Circle Gateway.",
     });
   }
-  const user = await ensureDemoUser();
   const amountUsd = Number(req.body.amountUsd || 10);
   if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
     return res.status(400).json({ error: "Top-up amount must be greater than zero" });
   }
-  await paymentService.creditMockBalance({ userId: user._id, amountUsd });
-  const updatedUser = await User.findById(user._id);
+  await paymentService.creditMockBalance({ userId: req.user._id, amountUsd });
+  const updatedUser = await User.findById(req.user._id);
   res.json({ user: updatedUser });
 }
 
@@ -58,8 +56,7 @@ export async function depositToGateway(req, res) {
     return res.status(400).json({ error: "Deposit is capped at $50 on testnet." });
   }
 
-  const user = await ensureDemoUser();
-  const key = reservationService.poolKeyFor(user._id);
+  const key = reservationService.poolKeyFor(req.user._id);
   // Snapshot BEFORE the on-chain deposit. Only a pool that already existed gets
   // credited by delta — a pool seeded DURING the multi-second confirmation window
   // reads the post-deposit on-chain balance, so crediting it too would double-
@@ -77,7 +74,7 @@ export async function depositToGateway(req, res) {
 }
 
 export async function getUserDashboard(req, res) {
-  const user = await ensureDemoUser();
+  const user = req.user;
   // Scope the dashboard to the active economy so a mode switch shows a clean,
   // unblended history. `settlements` is the real per-batch history (Gateway tx
   // refs in circle, mock_settled refs in mock); `ledgerEntries` keeps the local

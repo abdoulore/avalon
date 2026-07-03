@@ -272,7 +272,7 @@ export function VideoViewer({ content, user, onBalanceChange }) {
       // balance: re-approving reserves a fresh cap from the Gateway pool, so we
       // just complete + reset and let the next approval re-reserve on-chain.
       if (supportsTopUp) {
-        await api("/users/demo/top-up", { method: "POST", body: JSON.stringify({ amountUsd: capUsd }) });
+        await api("/users/me/top-up", { method: "POST", body: JSON.stringify({ amountUsd: capUsd }) });
       }
       await completeSession();
       sessionRef.current = null;

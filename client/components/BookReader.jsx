@@ -194,7 +194,7 @@ export function BookReader({ content, user, onBalanceChange }) {
       // Mock tops up the local balance before re-approving. Circle has no local
       // balance: re-approving reserves a fresh cap from the Gateway pool.
       if (supportsTopUp) {
-        await api("/users/demo/top-up", { method: "POST", body: JSON.stringify({ amountUsd: capUsd }) });
+        await api("/users/me/top-up", { method: "POST", body: JSON.stringify({ amountUsd: capUsd }) });
       }
       await completeSession();
       sessionRef.current = null;

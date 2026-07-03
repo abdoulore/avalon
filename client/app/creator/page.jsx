@@ -3,13 +3,12 @@
 import { BookOpen, Film, Save, Sparkles, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AppShell } from "../../components/AppShell";
-import { AdminTokenField, Card, StatTile, Table, Row, Td, Field, INPUT, BTN, RefreshButton, SectionHeading } from "../../components/ui";
+import { Card, StatTile, Table, Row, Td, Field, INPUT, BTN, RefreshButton, SectionHeading } from "../../components/ui";
 import { api, formatMoney } from "../../lib/api";
 import { usePaymentMode } from "../../hooks/usePaymentMode";
 
 const initialForm = {
   title: "",
-  creatorName: "",
   type: "video",
   description: "",
   coverUrl: "",
@@ -87,7 +86,9 @@ export default function CreatorPage() {
             <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-zinc-400">
               Publish once, then earn every second watched and every page read. You keep {creatorPct}%, settled per batch.
             </p>
-            <p className="mt-1 text-[12px] text-zinc-600">Demo instance: stats aggregate all usage on this deployment.</p>
+            <p className="mt-1 text-[12px] text-zinc-600">
+              Stats cover content published by your account. (The demo account owns the seeded catalog.)
+            </p>
           </div>
           <RefreshButton onClick={load} busy={loading} />
         </header>
@@ -147,9 +148,6 @@ export default function CreatorPage() {
                 <Field label="Title">
                   <input className={INPUT} required value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Untitled" />
                 </Field>
-                <Field label="Creator">
-                  <input className={INPUT} required value={form.creatorName} onChange={(e) => set("creatorName", e.target.value)} placeholder="Your name" />
-                </Field>
                 <Field label="Type">
                   <select className={INPUT} value={form.type} onChange={(e) => set("type", e.target.value)}>
                     <option value="video">Video</option>
@@ -203,13 +201,10 @@ export default function CreatorPage() {
                 </Field>
 
                 <div className="sm:col-span-2">
-                  <AdminTokenField hint="Publishing to the shared catalog requires the admin token." />
-                </div>
-
-                <div className="sm:col-span-2">
                   <button className={BTN} type="submit">
                     <Save size={16} /> Publish
                   </button>
+                  <p className="mt-2 text-[11.5px] text-zinc-600">Published under your account name.</p>
                 </div>
               </form>
             </Card>
@@ -328,7 +323,7 @@ function PreviewCard({ form }) {
           <h3 className="truncate text-sm font-semibold text-white">{form.title || "Untitled"}</h3>
           <span className="flex-none rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[11px] tabular-nums text-zinc-300">{rate}</span>
         </div>
-        <p className="mt-1 truncate text-[12px] text-zinc-500">{form.creatorName || "Creator name"}</p>
+        <p className="mt-1 truncate text-[12px] text-zinc-500">Your account name</p>
         {form.description ? <p className="mt-2 line-clamp-2 text-[12.5px] leading-relaxed text-zinc-400">{form.description}</p> : null}
       </div>
     </Card>

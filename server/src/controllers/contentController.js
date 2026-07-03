@@ -28,27 +28,37 @@ export async function getContent(req, res) {
 }
 
 export async function createContent(req, res) {
-  const content = await Content.create(normalizeContentPayload(req.body));
+  // Whoever is signed in IS the creator — identity comes from the token, never
+  // from the payload.
+  const content = await Content.create({
+    ...normalizeContentPayload(req.body),
+    creatorId: String(req.user._id),
+    creatorName: req.user.name,
+  });
   res.status(201).json({ content });
 }
 
 export async function updateContent(req, res) {
-  const content = await Content.findByIdAndUpdate(
-    req.params.id,
-    normalizeContentPayload(req.body),
-    { new: true, runValidators: true }
-  );
-
-  if (!content) {
+  const existing = await Content.findById(req.params.id);
+  if (!existing) {
     return res.status(404).json({ error: "Content not found" });
   }
+  if (existing.creatorId !== String(req.user._id)) {
+    return res.status(403).json({ error: "You can only edit your own content." });
+  }
+
+  const content = await Content.findByIdAndUpdate(
+    req.params.id,
+    { ...normalizeContentPayload(req.body), creatorId: existing.creatorId, creatorName: existing.creatorName },
+    { new: true, runValidators: true }
+  );
 
   res.json({ content });
 }
 
 export async function getCreatorEarnings(req, res) {
   const rows = await LedgerEntry.aggregate([
-    { $match: { type: "usage_debit", creatorPayoutUsd: { $gt: 0 } } },
+    { $match: { type: "usage_debit", creatorPayoutUsd: { $gt: 0 }, creatorId: String(req.user._id) } },
     {
       $group: {
         _id: "$creatorName",
@@ -73,7 +83,11 @@ export async function getCreatorEarnings(req, res) {
 }
 
 export async function getCreatorDashboard(req, res) {
-  const sessions = await UsageSession.find({}).populate("contentId").lean();
+  // Scoped to the signed-in creator: only sessions on content they published.
+  const ownContentIds = await Content.find({ creatorId: String(req.user._id) }).distinct("_id");
+  const sessions = await UsageSession.find({ contentId: { $in: ownContentIds } })
+    .populate("contentId")
+    .lean();
 
   const byContent = new Map();
   for (const session of sessions) {

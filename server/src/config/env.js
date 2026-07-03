@@ -15,6 +15,10 @@ export const env = {
   // Gates content publishing + on-chain deposits (x-admin-token header).
   // Fail-closed: when unset, those endpoints return 503.
   adminToken: process.env.ADMIN_TOKEN || "",
+  // Signs auth tokens (Authorization: Bearer). Fail-closed like ADMIN_TOKEN:
+  // when unset, all auth endpoints return 503 instead of signing with a
+  // guessable default.
+  jwtSecret: process.env.JWT_SECRET || "",
   circleApiKey: process.env.CIRCLE_API_KEY || "",
   circleGatewayBaseUrl: process.env.CIRCLE_GATEWAY_BASE_URL || "https://gateway-api-testnet.circle.com",
   circleGatewayEnv: process.env.CIRCLE_GATEWAY_ENV || "testnet",

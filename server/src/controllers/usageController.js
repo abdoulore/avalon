@@ -8,15 +8,21 @@ import { reservationService } from "../services/reservationService.js";
 // Billing happens on the socket spine (session:start / usage:heartbeat /
 // usage:page -> meterService). This controller only closes a session.
 export async function completeUsageSession(req, res) {
+  // Ownership check BEFORE the state change: completing settles + releases the
+  // reservation, so a stranger must not be able to close someone else's session.
+  const owned = await UsageSession.findById(req.params.id).select("userId");
+  if (!owned) {
+    return res.status(404).json({ error: "Usage session not found" });
+  }
+  if (String(owned.userId) !== String(req.user._id)) {
+    return res.status(403).json({ error: "This session belongs to another user." });
+  }
+
   const usageSession = await UsageSession.findByIdAndUpdate(
     req.params.id,
     { status: "completed", endedAt: new Date() },
     { new: true }
   ).populate("contentId");
-
-  if (!usageSession) {
-    return res.status(404).json({ error: "Usage session not found" });
-  }
 
   // Final flush settles pending (so spent reflects everything settled), THEN
   // release the unused Gateway reservation (cap - spent) back to the pool. Order

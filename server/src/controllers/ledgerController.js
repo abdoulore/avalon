@@ -1,19 +1,17 @@
-import { ensureDemoUser } from "./userController.js";
 import { ledgerService } from "../services/ledgerService.js";
 import { env } from "../config/env.js";
 import { paymentMode } from "../payments/paymentMode.js";
 
 export async function getUserTransactions(req, res) {
-  const user = await ensureDemoUser();
-  const transactions = await ledgerService.getUserHistory(user._id);
+  const transactions = await ledgerService.getUserHistory(req.user._id);
   res.json({ transactions });
 }
 
-// The full on-chain settlement history for the demo user: one row per settled
-// batch, with the Gateway/Arc tx hash, the signed payer->recipient authorization,
-// and the explorer base so the UI can link each tx out for verification.
+// The full on-chain settlement history for the signed-in user: one row per
+// settled batch, with the Gateway/Arc tx hash, the signed payer->recipient
+// authorization, and the explorer base so the UI can link each tx out.
 export async function getOnchainTransactions(req, res) {
-  const user = await ensureDemoUser();
+  const user = req.user;
   const circle = paymentMode.name === "circle";
   const [transactions, total] = await Promise.all([
     ledgerService.getAllSettlements(user._id),
@@ -31,7 +29,9 @@ export async function getOnchainTransactions(req, res) {
 }
 
 export async function getCreatorTransactions(req, res) {
-  const transactions = await ledgerService.getCreatorHistory(req.query.creatorId);
+  // Creators only see their own payout history — the id comes from the token,
+  // never from the query string.
+  const transactions = await ledgerService.getCreatorHistory(String(req.user._id));
   res.json({ transactions });
 }
 

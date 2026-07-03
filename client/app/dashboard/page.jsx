@@ -22,7 +22,7 @@ export default function DashboardPage() {
   async function load() {
     setLoading(true);
     try {
-      setData(await api("/users/demo/dashboard"));
+      setData(await api("/users/me/dashboard"));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -32,7 +32,7 @@ export default function DashboardPage() {
 
   async function topUp() {
     try {
-      await api("/users/demo/top-up", { method: "POST", body: JSON.stringify({ amountUsd: 10 }) });
+      await api("/users/me/top-up", { method: "POST", body: JSON.stringify({ amountUsd: 10 }) });
       await load();
     } catch (err) {
       setError(err.message);

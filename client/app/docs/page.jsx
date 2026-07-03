@@ -52,7 +52,7 @@ export default function DocsPage() {
   }, []);
 
   return (
-    <AppShell>
+    <AppShell requireAuth={false}>
       <div className="grid gap-10 lg:grid-cols-[210px_1fr]">
         {/* Sidebar */}
         <aside className="hidden lg:block">

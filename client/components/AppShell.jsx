@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { BarChart3, BookOpen, Clapperboard, CreditCard, Menu, Receipt, Sparkles, Upload, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { BarChart3, BookOpen, Clapperboard, CreditCard, LogOut, Menu, Receipt, Sparkles, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useAuth } from "../hooks/useAuth";
 import { usePaymentMode } from "../hooks/usePaymentMode";
 import { AvalonMark } from "./Logo";
 import { WakeBanner } from "./WakeBanner";
@@ -18,8 +19,10 @@ const LINKS = [
   { href: "/docs", label: "Docs", Icon: BookOpen },
 ];
 
-export function AppShell({ children }) {
+export function AppShell({ children, requireAuth = true }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading, signOut } = useAuth();
   const { circle, network, loaded } = usePaymentMode();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -30,6 +33,21 @@ export function AppShell({ children }) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (requireAuth && !loading && !user) {
+      router.replace("/login");
+    }
+  }, [requireAuth, loading, user, router]);
+
+  // Don't flash protected content (or fire its API calls) before the redirect.
+  if (requireAuth && !user) {
+    return (
+      <div className="av grid min-h-[100dvh] place-items-center bg-ink-950 font-sans text-sm text-zinc-500 antialiased">
+        {loading ? "Checking your session…" : "Redirecting to sign in…"}
+      </div>
+    );
+  }
 
   return (
     <div className="av min-h-[100dvh] bg-ink-950 font-sans text-zinc-200 antialiased">
@@ -73,6 +91,20 @@ export function AppShell({ children }) {
                 {circle ? `Arc testnet · ${network}` : "Mock mode"}
               </span>
             ) : null}
+            {user ? (
+              <button
+                type="button"
+                onClick={() => {
+                  signOut();
+                  router.replace("/login");
+                }}
+                title={`Signed in as ${user.name} — sign out`}
+                className="hidden items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-[12px] text-zinc-400 transition-colors hover:border-white/25 hover:text-white md:inline-flex"
+              >
+                <span className="max-w-[12ch] truncate">{user.name}</span>
+                <LogOut size={13} />
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
@@ -102,6 +134,19 @@ export function AppShell({ children }) {
                   </Link>
                 );
               })}
+              {user ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    signOut();
+                    router.replace("/login");
+                  }}
+                  className="inline-flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+                >
+                  <LogOut size={16} /> Sign out ({user.name})
+                </button>
+              ) : null}
             </div>
           </div>
         ) : null}

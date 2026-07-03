@@ -5,6 +5,7 @@ import { paymentMode } from "./payments/paymentMode.js";
 import { paymentService } from "./services/paymentService.js";
 import { asyncHandler } from "./middleware/asyncHandler.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { authRouter } from "./routes/authRoutes.js";
 import { conciergeRouter } from "./routes/conciergeRoutes.js";
 import { contentRouter } from "./routes/contentRoutes.js";
 import { ledgerRouter } from "./routes/ledgerRoutes.js";
@@ -53,6 +54,7 @@ app.get("/api/config", (req, res) => {
   });
 });
 
+app.use("/api/auth", wrapRouter(authRouter));
 app.use("/api/content", wrapRouter(contentRouter));
 app.use("/api/concierge", wrapRouter(conciergeRouter));
 app.use("/api/ledger", wrapRouter(ledgerRouter));

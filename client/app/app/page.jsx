@@ -58,7 +58,7 @@ export default function AppHomePage() {
   async function load() {
     try {
       setLoading(true);
-      const [contentPayload, userPayload] = await Promise.all([api("/content"), api("/users/demo")]);
+      const [contentPayload, userPayload] = await Promise.all([api("/content"), api("/users/me")]);
       const items = contentPayload.content;
       setContent(items);
       // Deep link from Ember: /app?play=<id> opens that title; else the first.
@@ -80,7 +80,7 @@ export default function AppHomePage() {
   }
 
   async function refreshUser() {
-    const payload = await api("/users/demo");
+    const payload = await api("/users/me");
     setUser(payload.user);
   }
 

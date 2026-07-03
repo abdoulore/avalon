@@ -18,14 +18,14 @@ export default function TopUpPage() {
   const { circle, network } = usePaymentMode();
 
   useEffect(() => {
-    api("/users/demo").then((p) => setUser(p.user)).catch(() => {});
+    api("/users/me").then((p) => setUser(p.user)).catch(() => {});
   }, []);
 
   async function topUp(amountUsd) {
     setError("");
     setMessage("");
     try {
-      const payload = await api("/users/demo/top-up", { method: "POST", body: JSON.stringify({ amountUsd }) });
+      const payload = await api("/users/me/top-up", { method: "POST", body: JSON.stringify({ amountUsd }) });
       setUser(payload.user);
       setMessage(`Added $${amountUsd} test balance.`);
     } catch (err) {
@@ -95,7 +95,7 @@ function GatewayDeposit() {
   const loadBalances = useCallback(async () => {
     setLoadingBal(true);
     try {
-      setBal(await api("/users/demo/gateway-balance"));
+      setBal(await api("/users/me/gateway-balance"));
     } catch {
       setBal(null);
     } finally {
@@ -120,7 +120,7 @@ function GatewayDeposit() {
     setError("");
     setResult(null);
     try {
-      const res = await api("/users/demo/gateway-deposit", { method: "POST", body: JSON.stringify({ amountUsd: amount }) });
+      const res = await api("/users/me/gateway-deposit", { method: "POST", body: JSON.stringify({ amountUsd: amount }) });
       setResult(res);
       await loadBalances(); // refresh wallet (down) and Gateway (up)
     } catch (err) {

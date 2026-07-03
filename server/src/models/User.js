@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, select: false },
     balanceUsd: { type: Number, required: true, default: 0 },
     currency: { type: String, enum: ["USD", "USDC"], default: "USDC" },
+    // Circle developer-controlled wallet (circle mode): each user signs and
+    // settles from their own EOA. Empty until provisioned; the demo account
+    // maps to the project wallet from env instead.
+    circleWalletId: { type: String, default: "" },
+    circleWalletAddress: { type: String, default: "" },
   },
   { timestamps: true }
 );

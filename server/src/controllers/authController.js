@@ -4,6 +4,7 @@ import { User } from "../models/User.js";
 import { paymentMode } from "../payments/paymentMode.js";
 import { ensureDemoUser } from "./userController.js";
 import { signUserToken } from "../middleware/userAuth.js";
+import { provisionUserWallet } from "../services/userWalletService.js";
 
 // Mock mode hands new users test money so they can watch immediately; circle
 // mode ignores the local balance entirely (funds live in the Gateway pool).
@@ -52,7 +53,19 @@ export async function signup(req, res) {
     currency: "USDC",
   });
 
-  res.status(201).json({ token: signUserToken(user), user: publicUser(user) });
+  // Circle mode: provision the user's own developer-controlled wallet now.
+  // Best-effort — on failure the account still works and walletFor() retries
+  // lazily the first time the wallet is actually needed.
+  if (paymentMode.name === "circle") {
+    try {
+      await provisionUserWallet(user);
+    } catch (error) {
+      console.error(`Wallet provisioning failed for ${user._id}: ${error.message}`);
+    }
+  }
+
+  const fresh = await User.findById(user._id);
+  res.status(201).json({ token: signUserToken(fresh), user: publicUser(fresh) });
 }
 
 export async function login(req, res) {

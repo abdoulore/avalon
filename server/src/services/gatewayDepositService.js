@@ -27,9 +27,9 @@ const USDC = "0x3600000000000000000000000000000000000000";
 const GATEWAY_WALLET = "0x0077777d7EBA4688BDeF3E311b846F25870A19B9";
 const FINAL_STATES = new Set(["FAILED", "DENIED", "CANCELLED"]);
 
-async function execContract(client, { contractAddress, abiFunctionSignature, abiParameters }) {
+async function execContract(client, { walletId, contractAddress, abiFunctionSignature, abiParameters }) {
   const res = await client.createContractExecutionTransaction({
-    walletId: env.circleBuyerWalletId,
+    walletId,
     contractAddress,
     abiFunctionSignature,
     abiParameters,
@@ -44,35 +44,37 @@ async function execContract(client, { contractAddress, abiFunctionSignature, abi
   return tx;
 }
 
+// Defaults target the project wallet (used by the CLI script); the per-user
+// endpoints pass the signed-in user's wallet explicitly.
 class GatewayDepositService {
-  // Current on-chain Gateway available balance for the buyer (atomic + dollars).
-  async readAvailable() {
-    const atomic = Number(await readGatewayAvailableAtomic(env.circleBuyerAddress));
+  // Current on-chain Gateway available balance for a wallet (atomic + dollars).
+  async readAvailable({ address = env.circleBuyerAddress } = {}) {
+    const atomic = Number(await readGatewayAvailableAtomic(address));
     return { availableAtomic: atomic, availableUsd: atomic / 1_000_000 };
   }
 
-  // The buyer wallet's own USDC balance (the source you deposit FROM, distinct
+  // The wallet's own USDC balance (the source you deposit FROM, distinct
   // from the Gateway available balance you settle from). ERC-20 balanceOf.
-  async readWalletUsdcAtomic() {
+  async readWalletUsdcAtomic(address = env.circleBuyerAddress) {
     const pub = createPublicClient({ transport: http(ARC_RPC) });
     const raw = await pub.readContract({
       address: USDC,
       abi: ERC20_BALANCE_OF_ABI,
       functionName: "balanceOf",
-      args: [env.circleBuyerAddress],
+      args: [address],
     });
     return Number(raw);
   }
 
   // Both balances + the address to fund: wallet USDC (deposit source), Gateway
-  // available (settle source), and the buyer address to send test USDC to.
-  async readBalances() {
+  // available (settle source), and the wallet address to send test USDC to.
+  async readBalances({ address = env.circleBuyerAddress } = {}) {
     const [availableAtomic, walletAtomic] = await Promise.all([
-      readGatewayAvailableAtomic(env.circleBuyerAddress),
-      this.readWalletUsdcAtomic(),
+      readGatewayAvailableAtomic(address),
+      this.readWalletUsdcAtomic(address),
     ]);
     return {
-      address: env.circleBuyerAddress,
+      address,
       walletAtomic: Number(walletAtomic),
       walletUsd: Number(walletAtomic) / 1_000_000,
       availableAtomic: Number(availableAtomic),
@@ -81,7 +83,7 @@ class GatewayDepositService {
   }
 
   // approve -> deposit -> reread. Returns before/after balances + both tx hashes.
-  async deposit({ amountUsd }) {
+  async deposit({ amountUsd, walletId = env.circleBuyerWalletId, address = env.circleBuyerAddress }) {
     const usd = Number(amountUsd);
     if (!Number.isFinite(usd) || usd <= 0) {
       const err = new Error("Deposit amount must be greater than zero.");
@@ -91,18 +93,20 @@ class GatewayDepositService {
     const amountAtomic = String(Math.round(usd * 1_000_000));
     const client = getCircleWalletClient();
 
-    const before = Number(await readGatewayAvailableAtomic(env.circleBuyerAddress));
+    const before = Number(await readGatewayAvailableAtomic(address));
     const approveTx = await execContract(client, {
+      walletId,
       contractAddress: USDC,
       abiFunctionSignature: "approve(address,uint256)",
       abiParameters: [GATEWAY_WALLET, amountAtomic],
     });
     const depositTx = await execContract(client, {
+      walletId,
       contractAddress: GATEWAY_WALLET,
       abiFunctionSignature: "deposit(address,uint256)",
       abiParameters: [USDC, amountAtomic],
     });
-    const after = Number(await readGatewayAvailableAtomic(env.circleBuyerAddress));
+    const after = Number(await readGatewayAvailableAtomic(address));
 
     return {
       depositedAtomic: Number(amountAtomic),

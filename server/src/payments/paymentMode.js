@@ -3,6 +3,7 @@ import { env } from "../config/env.js";
 import { User } from "../models/User.js";
 import { roundMoney } from "./paymentAdapter.js";
 import { createCircleSigner } from "./circleWalletSigner.js";
+import { walletFor } from "../services/userWalletService.js";
 import {
   circleGatewayService,
   fromUsdcAtomic,
@@ -35,8 +36,9 @@ const mockStrategy = {
   // Session start checks the local balance; circle defers to the on-chain reserve.
   requiresLocalBalance: true,
   // Per-user pool over the mock balance. Namespaced by mode so it can never
-  // collide with a circle pool in the same database.
-  poolKey: (userId) => `mock:user:${userId}`,
+  // collide with a circle pool in the same database. (Async to match circle,
+  // which must look the user's wallet up.)
+  poolKey: async (userId) => `mock:user:${userId}`,
   async seedAtomic({ user }) {
     return Number(toUsdcAtomic(user?.balanceUsd || 0));
   },
@@ -58,29 +60,37 @@ const mockStrategy = {
   },
 };
 
-// Circle economy: one sponsored Gateway wallet on Arc, real EIP-3009 settlement.
+// Circle economy: Circle developer-controlled wallets on Arc, real EIP-3009
+// settlement. Per-user wallets; the demo account uses the project wallet.
 const circleStrategy = {
   name: "circle",
   network: env.circleSupportedChain,
   supportsTopUp: false,
   requiresLocalBalance: false,
-  // ONE shared wallet pool: every session reserves from the single funded buyer
-  // wallet, so concurrent sessions can't collectively over-claim its balance.
-  poolKey: () => `circle:wallet:${String(env.circleBuyerAddress || "").toLowerCase()}`,
-  async seedAtomic() {
-    return Number(await readGatewayAvailableAtomic(env.circleBuyerAddress));
+  // Pool per WALLET: each user's sessions reserve against the on-chain Gateway
+  // balance of the wallet they settle from, so concurrent sessions can't
+  // collectively over-claim it. The demo account resolves to the shared project
+  // wallet (same pool key as before per-user wallets existed); everyone else
+  // resolves to their own provisioned wallet.
+  poolKey: async (userId) => {
+    const { address } = await walletFor(userId);
+    return `circle:wallet:${String(address || "").toLowerCase()}`;
   },
-  // Sign + settle one batch through the Gateway facilitator. No mock fallback: if
-  // circle mode is misconfigured, createCircleSigner / settleSigned throw or
-  // return !ok, and the failure surfaces to the caller instead of "succeeding"
-  // as a local debit.
+  async seedAtomic({ user }) {
+    const { address } = await walletFor(user);
+    return Number(await readGatewayAvailableAtomic(address));
+  },
+  // Sign + settle one batch through the Gateway facilitator, as the session
+  // user's own wallet. No mock fallback: if circle mode is misconfigured,
+  // createCircleSigner / settleSigned throw or return !ok, and the failure
+  // surfaces to the caller instead of "succeeding" as a local debit.
   async settleBatch({ session, amountAtomic, nonce }) {
     const requirements = circleGatewayService.createPaymentRequirements({
       amount: fromUsdcAtomic(amountAtomic),
       resourceUrl: "/api/settlement/batch",
       description: `Avalon batch settlement for session ${session._id}`,
     });
-    const signer = createCircleSigner();
+    const signer = createCircleSigner(await walletFor(session.userId));
     const signed = await circleGatewayService.signAuthorization({ signer, requirements, amountAtomic, nonce });
     return circleGatewayService.settleSigned({ signed, requirements });
   },

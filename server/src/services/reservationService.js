@@ -6,9 +6,10 @@ import { paymentMode } from "../payments/paymentMode.js";
  * Reservation over a funding-source pool. Authorization is an atomic CLAIM, so
  * concurrent sessions cannot collectively over-claim the balance.
  *
- * In circle mode the funding source is the ONE sponsored Gateway wallet, so every
- * user shares a single pool (keyed by the wallet). In mock mode each user has
- * their own mock balance, so the pool is per user.
+ * In circle mode the funding source is the user's Gateway wallet, so the pool
+ * is keyed by wallet address (the demo account resolves to the shared project
+ * wallet). In mock mode each user has their own mock balance, so the pool is
+ * per user.
  *
  * Each op is a single guarded findOneAndUpdate (same pattern as
  * allowanceService.draw). Every op is a transfer between buckets, so the invariant
@@ -16,13 +17,15 @@ import { paymentMode } from "../payments/paymentMode.js";
  *   availableAtomic + reservedAtomic + spentAtomic === totalAtomic   (always)
  *   availableAtomic never < 0 (reserve is guarded availableAtomic >= amount).
  */
-// The active mode owns how a pool is keyed (mock: per user; circle: the one
-// shared wallet). Mode-namespaced so mock and circle pools never collide.
+// The active mode owns how a pool is keyed (mock: per user; circle: by the
+// user's wallet address). Mode-namespaced so mock and circle pools never
+// collide. Async because circle resolves the user's wallet.
 function poolKeyFor(userId) {
   return paymentMode.poolKey(userId);
 }
 
 export class ReservationService {
+  // Returns a Promise<string>.
   poolKeyFor(userId) {
     return poolKeyFor(userId);
   }
@@ -117,7 +120,7 @@ export class ReservationService {
     }
     const unused = Math.max(0, Number(session.allowance.capAtomic || 0) - Number(session.allowance.spentAtomic || 0));
     if (unused > 0) {
-      await this.release({ key: poolKeyFor(session.userId), amountAtomic: unused });
+      await this.release({ key: await poolKeyFor(session.userId), amountAtomic: unused });
     }
     return { ok: true, released: unused };
   }

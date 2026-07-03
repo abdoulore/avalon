@@ -6,6 +6,7 @@ import { ledgerService } from "../services/ledgerService.js";
 import { paymentService } from "../services/paymentService.js";
 import { gatewayDepositService } from "../services/gatewayDepositService.js";
 import { reservationService } from "../services/reservationService.js";
+import { walletFor } from "../services/userWalletService.js";
 
 export async function getMe(req, res) {
   res.json({ user: req.user });
@@ -29,13 +30,14 @@ export async function topUpMe(req, res) {
   res.json({ user: updatedUser });
 }
 
-// Circle-only: the buyer wallet's on-chain Gateway available balance, the funding
-// source sessions reserve against. Mock mode has no on-chain balance.
+// Circle-only: the user's wallet on-chain Gateway available balance, the funding
+// source their sessions reserve against. Mock mode has no on-chain balance.
 export async function getGatewayBalance(req, res) {
   if (paymentMode.name !== "circle") {
     return res.status(400).json({ error: "Gateway balance is only available in circle mode." });
   }
-  const balances = await gatewayDepositService.readBalances();
+  const { address } = await walletFor(req.user);
+  const balances = await gatewayDepositService.readBalances({ address });
   res.json({ ...balances, network: paymentMode.network });
 }
 
@@ -56,7 +58,8 @@ export async function depositToGateway(req, res) {
     return res.status(400).json({ error: "Deposit is capped at $50 on testnet." });
   }
 
-  const key = reservationService.poolKeyFor(req.user._id);
+  const wallet = await walletFor(req.user);
+  const key = await reservationService.poolKeyFor(req.user);
   // Snapshot BEFORE the on-chain deposit. Only a pool that already existed gets
   // credited by delta — a pool seeded DURING the multi-second confirmation window
   // reads the post-deposit on-chain balance, so crediting it too would double-
@@ -64,7 +67,7 @@ export async function depositToGateway(req, res) {
   // undercounts (conservative: can never over-reserve the wallet).
   const poolBefore = await reservationService.getPool(key);
 
-  const result = await gatewayDepositService.deposit({ amountUsd });
+  const result = await gatewayDepositService.deposit({ amountUsd, ...wallet });
 
   if (poolBefore) {
     await reservationService.credit({ key, amountAtomic: result.depositedAtomic });

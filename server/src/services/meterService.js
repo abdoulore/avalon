@@ -1,7 +1,6 @@
 import { Content } from "../models/Content.js";
 import { UsageSession } from "../models/UsageSession.js";
 import { User } from "../models/User.js";
-import { env } from "../config/env.js";
 import { roundMoney } from "../payments/paymentAdapter.js";
 import { toUsdcAtomic, fromUsdcAtomic } from "./circleGatewayService.js";
 import { paymentService } from "./paymentService.js";
@@ -239,14 +238,14 @@ export class MeterService {
   // balance. The allowance cap == the reserved amount. Seeds the pool once from
   // the Gateway balance (mock: User.balanceUsd; circle: on-chain availableBalance).
   async _authorizeAgainstGateway({ session, user }) {
-    const key = reservationService.poolKeyFor(session.userId);
-    // Seed the pool only when it doesn't exist yet. In circle mode every session
-    // shares one wallet pool, so the on-chain balance is read only on first use.
+    const key = await reservationService.poolKeyFor(session.userId);
+    // Seed the pool only when it doesn't exist yet: sessions on the same wallet
+    // share a pool, so the on-chain balance is read only on first use.
     let pool = await reservationService.getPool(key);
     if (!pool) {
       // The active mode owns the funding source: mock seeds from the local
-      // balance, circle reads the on-chain Gateway available balance.
-      const seedAtomic = await paymentMode.seedAtomic({ user, address: env.circleBuyerAddress });
+      // balance, circle reads the wallet's on-chain Gateway available balance.
+      const seedAtomic = await paymentMode.seedAtomic({ user });
       pool = await reservationService.ensurePool({ key, seedAtomic });
     }
 

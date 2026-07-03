@@ -44,7 +44,7 @@ export default function TopUpPage() {
             </h1>
             <p className="mt-2 max-w-[48ch] text-sm leading-relaxed text-zinc-400">
               {circle
-                ? "Spending settles from the shared Gateway balance on-chain. Deposit test USDC straight from here."
+                ? "Spending settles from your wallet's Gateway balance on-chain. Deposit test USDC straight from here."
                 : "Add a local test balance. Only the seconds and pages you use are charged."}
             </p>
           </div>
@@ -205,7 +205,7 @@ function GatewayDeposit() {
       </div>
 
       <div className="mt-4">
-        <AdminTokenField hint="Depositing moves funds from the project wallet - admin token required." />
+        <AdminTokenField hint="On-chain deposits are admin-gated on this demo deployment." />
       </div>
 
       <button className={`${BTN} mt-4 w-full py-3`} type="button" onClick={deposit} disabled={busy || amount <= 0}>

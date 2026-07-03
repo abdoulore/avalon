@@ -178,7 +178,7 @@ export class SettlementService {
     // Settled funds leave the Gateway pool: reserved -> spent (best-effort; a
     // session that authorized without a pool — e.g. a direct script — is a no-op).
     await reservationService.settleConvert({
-      key: reservationService.poolKeyFor(updated.userId),
+      key: await reservationService.poolKeyFor(updated.userId),
       amountAtomic: batch.amountAtomic,
     });
 

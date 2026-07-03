@@ -111,7 +111,7 @@ test("settle-convert moves reserved -> spent (out of pool), not back to availabl
 test("releaseSession is idempotent - a double release credits once", async (t) => {
   if (!connected) return t.skip("MongoDB not reachable");
   const userId = new mongoose.Types.ObjectId();
-  const key = reservationService.poolKeyFor(userId); // "user:<id>" in mock mode
+  const key = await reservationService.poolKeyFor(userId); // "mock:user:<id>" in mock mode
   await reservationService.ensurePool({ key, seedAtomic: 1_000_000 });
   await reservationService.reserve({ key, amountAtomic: 500_000 }); // session cap
 
@@ -140,7 +140,7 @@ test("releaseSession is idempotent - a double release credits once", async (t) =
 test("full lifecycle: reserve -> partial spend -> settle -> release unused; invariant holds", async (t) => {
   if (!connected) return t.skip("MongoDB not reachable");
   const userId = new mongoose.Types.ObjectId();
-  const key = reservationService.poolKeyFor(userId);
+  const key = await reservationService.poolKeyFor(userId);
   await reservationService.ensurePool({ key, seedAtomic: 1_000_000 });
 
   await reservationService.reserve({ key, amountAtomic: 500_000 }); // $0.50 cap

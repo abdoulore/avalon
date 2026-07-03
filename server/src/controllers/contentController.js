@@ -12,7 +12,8 @@ export async function listContent(req, res) {
     filter.type = type;
   }
 
-  const content = await Content.find(filter).sort({ createdAt: -1 });
+  // type desc puts "video" before "book", so the library leads with films.
+  const content = await Content.find(filter).sort({ type: -1, createdAt: -1 });
   res.json({ content });
 }
 

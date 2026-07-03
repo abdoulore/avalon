@@ -325,6 +325,13 @@ export function VideoViewer({ content, user, onBalanceChange }) {
         </div>
 
         <div className="mt-4">
+          <button
+            className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-white/35 hover:text-white"
+            onClick={finishSession}
+            type="button"
+          >
+            Finish session &amp; settle
+          </button>
           <h2 className="text-xl font-semibold tracking-tight text-white">{content.title}</h2>
           <p className="mt-1 text-sm leading-relaxed text-zinc-400">{content.description}</p>
           <p className="mt-3 font-mono text-[12px] tabular-nums text-zinc-500">
@@ -339,13 +346,6 @@ export function VideoViewer({ content, user, onBalanceChange }) {
           <p className="mt-1.5 text-[11.5px] text-zinc-600">
             Billed per second of playback. Pausing costs nothing; rewatching a scene bills again.
           </p>
-          <button
-            className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-white/35 hover:text-white"
-            onClick={finishSession}
-            type="button"
-          >
-            Finish session &amp; settle
-          </button>
         </div>
 
         {error && !needsExtend ? (

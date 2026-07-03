@@ -11,6 +11,7 @@ import {
   PenLine,
   Receipt,
 } from "lucide-react";
+import { AvalonMark } from "../components/Logo";
 import { Nav } from "../components/landing/Nav";
 import { Reveal } from "../components/landing/Reveal";
 import { LiveMeter } from "../components/landing/LiveMeter";
@@ -304,7 +305,7 @@ type      TransferWith
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr]">
             <div>
               <Link href="/" className="flex items-center gap-2 text-base font-semibold tracking-tight text-white">
-                <span className="inline-flex h-2.5 w-2.5 rounded-full bg-brand" />
+                <AvalonMark size={26} />
                 Avalon
               </Link>
               <p className="mt-3 max-w-[40ch] text-sm leading-relaxed text-zinc-500">

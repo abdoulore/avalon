@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { BarChart3, BookOpen, Clapperboard, CreditCard, Menu, Receipt, Sparkles, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePaymentMode } from "../hooks/usePaymentMode";
+import { AvalonMark } from "./Logo";
 import { WakeBanner } from "./WakeBanner";
 
 const LINKS = [
@@ -39,7 +40,7 @@ export function AppShell({ children }) {
       >
         <nav className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-5 sm:px-8">
           <Link href="/" className="flex flex-none items-center gap-2 text-[15px] font-semibold tracking-tight text-white">
-            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-brand shadow-[0_0_12px_rgba(52,211,153,0.7)]" />
+            <AvalonMark size={24} />
             Avalon
           </Link>
 

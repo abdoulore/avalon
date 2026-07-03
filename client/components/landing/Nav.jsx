@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
+import { AvalonMark } from "../Logo";
 
 const LINKS = [
   { href: "#how", label: "How it works" },
@@ -31,7 +32,7 @@ export function Nav() {
     >
       <nav className="mx-auto flex h-16 max-w-[1180px] items-center justify-between px-5 sm:px-8">
         <Link href="/" className="flex items-center gap-2 text-[15px] font-semibold tracking-tight text-white">
-          <span className="inline-flex h-2.5 w-2.5 rounded-full bg-brand shadow-[0_0_12px_rgba(52,211,153,0.7)]" />
+          <AvalonMark size={24} />
           Avalon
         </Link>
 

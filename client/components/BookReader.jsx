@@ -260,11 +260,7 @@ export function BookReader({ content, user, onBalanceChange }) {
           Each page bills once; pages you{"'"}ve already paid for stay free to revisit this session.
         </p>
 
-        <button
-          className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-white/35 hover:text-white"
-          onClick={completeSession}
-          type="button"
-        >
+        <button className={`${BTN} mt-4`} onClick={completeSession} type="button">
           Finish session &amp; settle
         </button>
 

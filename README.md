@@ -4,8 +4,8 @@
 
 > Built on Circle + Arc, addressing streaming & continuous payments and creator/publisher monetization, with an agentic budget layer on top.
 
-- Demo video: `<add Loom/YouTube link>`
-- Live: `<add deployed link>`
+- Demo video: https://youtu.be/EP12KS0QKG0
+- Live: https://avalon-nine-lilac.vercel.app
 
 ---
 

@@ -25,6 +25,7 @@ export function BookReader({ content, user, onBalanceChange }) {
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState(null);
   const [approved, setApproved] = useState(false);
+  const [hasSession, setHasSession] = useState(false); // mirrors sessionRef for rendering
   const [allowanceCapUsd, setAllowanceCapUsd] = useState(null);
   const [needsExtend, setNeedsExtend] = useState(false);
   const [extendBusy, setExtendBusy] = useState(false);
@@ -64,6 +65,7 @@ export function BookReader({ content, user, onBalanceChange }) {
     setError("");
     setReceipt(null);
     setApproved(false);
+    setHasSession(false);
     setAllowanceCapUsd(null);
     setNeedsExtend(false);
   }, [content._id]);
@@ -117,6 +119,7 @@ export function BookReader({ content, user, onBalanceChange }) {
           return;
         }
         sessionRef.current = response.session._id;
+        setHasSession(true);
         if (typeof response.balanceUsd === "number") setLiveBalance(response.balanceUsd);
         resolve(sessionRef.current);
       });
@@ -162,10 +165,15 @@ export function BookReader({ content, user, onBalanceChange }) {
   }
 
   async function completeSession() {
-    if (!sessionRef.current) return;
+    // Claim the id and clear the ref synchronously (like VideoViewer): a page
+    // turn after finishing must start a fresh session, not reuse the dead id.
+    const sessionId = sessionRef.current;
+    if (!sessionId) return;
+    sessionRef.current = null;
+    setHasSession(false);
     try {
-      socketRef.current?.emit("usage:heartbeat", { sessionId: sessionRef.current, state: "left" });
-      const payload = await api(`/usage/sessions/${sessionRef.current}/complete`, { method: "POST" });
+      socketRef.current?.emit("usage:heartbeat", { sessionId, state: "left" });
+      const payload = await api(`/usage/sessions/${sessionId}/complete`, { method: "POST" });
       setReceipt(payload.receipt);
     } catch {
       // Receipt display is best-effort on page switches and unmounts.
@@ -260,9 +268,11 @@ export function BookReader({ content, user, onBalanceChange }) {
           Each page bills once; pages you{"'"}ve already paid for stay free to revisit this session.
         </p>
 
-        <button className={`${BTN} mt-4`} onClick={completeSession} type="button">
-          Finish session &amp; settle
-        </button>
+        {hasSession ? (
+          <button className={`${BTN} mt-4`} onClick={completeSession} type="button">
+            Finish session &amp; settle
+          </button>
+        ) : null}
 
         {error && !needsExtend ? (
           <div className="mt-3 rounded-xl border border-throttle/40 bg-throttle/10 px-3.5 py-2.5 text-sm text-zinc-200">{error}</div>

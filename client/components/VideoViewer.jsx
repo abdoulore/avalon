@@ -27,6 +27,7 @@ export function VideoViewer({ content, user, onBalanceChange }) {
   const [receipt, setReceipt] = useState(null);
   // hero chrome (derived from the existing payload; billing path untouched)
   const [approved, setApproved] = useState(false);
+  const [hasSession, setHasSession] = useState(false); // mirrors sessionRef for rendering
   const [isPlaying, setIsPlaying] = useState(false);
   const [agentDecision, setAgentDecision] = useState(null);
   const [allowanceCapUsd, setAllowanceCapUsd] = useState(null);
@@ -56,6 +57,7 @@ export function VideoViewer({ content, user, onBalanceChange }) {
     setError("");
     setReceipt(null);
     setApproved(false);
+    setHasSession(false);
     setIsPlaying(false);
     setAgentDecision(null);
     setAllowanceCapUsd(null);
@@ -78,6 +80,7 @@ export function VideoViewer({ content, user, onBalanceChange }) {
         }
         if (payload.error === "Active session not found") {
           sessionRef.current = null;
+          setHasSession(false);
         }
         if (payload.needsReauth) {
           setNeedsExtend(true);
@@ -171,6 +174,7 @@ export function VideoViewer({ content, user, onBalanceChange }) {
           return;
         }
         sessionRef.current = response.session._id;
+        setHasSession(true);
         setLiveBalance(response.balanceUsd);
         resolve(sessionRef.current);
       });
@@ -190,6 +194,7 @@ export function VideoViewer({ content, user, onBalanceChange }) {
         }
         if (response?.error === "Active session not found") {
           sessionRef.current = null;
+          setHasSession(false);
         }
         if (response?.needsReauth) {
           setNeedsExtend(true);
@@ -235,6 +240,7 @@ export function VideoViewer({ content, user, onBalanceChange }) {
       return;
     }
     sessionRef.current = null;
+    setHasSession(false);
 
     try {
       const payload = await api(`/usage/sessions/${sessionId}/complete`, { method: "POST" });
@@ -326,9 +332,11 @@ export function VideoViewer({ content, user, onBalanceChange }) {
         </div>
 
         <div className="mt-4">
-          <button className={`${BTN} mb-4`} onClick={finishSession} type="button">
-            Finish session &amp; settle
-          </button>
+          {hasSession ? (
+            <button className={`${BTN} mb-4`} onClick={finishSession} type="button">
+              Finish session &amp; settle
+            </button>
+          ) : null}
           <h2 className="text-xl font-semibold tracking-tight text-white">{content.title}</h2>
           <p className="mt-1 text-sm leading-relaxed text-zinc-400">{content.description}</p>
           <p className="mt-3 font-mono text-[12px] tabular-nums text-zinc-500">

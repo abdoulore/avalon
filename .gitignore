@@ -1,6 +1,7 @@
 # --- Dependencies ---
 node_modules/
-docs/
+# Root-level planning notes only — NOT app routes like client/app/docs/.
+/docs/
 .claude/
 
 # --- Build output & caches ---

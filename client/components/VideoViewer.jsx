@@ -286,6 +286,8 @@ export function VideoViewer({ content, user, onBalanceChange }) {
           <video
             ref={videoRef}
             controls
+            controlsList="nodownload"
+            onContextMenu={(e) => e.preventDefault()}
             poster={content.coverUrl}
             src={content.mediaUrl}
             className="block aspect-video w-full bg-[#05060a]"

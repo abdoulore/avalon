@@ -73,9 +73,14 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-button, input, select, textarea { font: inherit; }
-button { cursor: pointer; }
-a { color: inherit; text-decoration: none; }
+/* Element resets live in layer(base) so Tailwind utilities (layer(utilities),
+   declared later) always override them; un-layered rules would beat every
+   utility class regardless of specificity. */
+@layer base {
+  button, input, select, textarea { font: inherit; }
+  button { cursor: pointer; }
+  a { color: inherit; text-decoration: none; }
+}
 
 /* Money + all numeric telemetry use tabular figures so digits never jitter. */
 .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
@@ -341,9 +346,11 @@ a { color: inherit; text-decoration: none; }
 .balance-pill .mono { color: var(--ink); }
 
 .form-grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-label { color: var(--ink-soft); display: grid; gap: 6px; font-weight: 600; font-size: 13px; }
-input, select, textarea { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink); padding: 10px 12px; width: 100%; }
-textarea { min-height: 92px; resize: vertical; }
+@layer base {
+  label { color: var(--ink-soft); display: grid; gap: 6px; font-weight: 600; font-size: 13px; }
+  input, select, textarea { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink); padding: 10px 12px; width: 100%; }
+  textarea { min-height: 92px; resize: vertical; }
+}
 .full { grid-column: 1 / -1; }
 
 .table { border-collapse: collapse; width: 100%; }
@@ -380,21 +387,21 @@ textarea { min-height: 92px; resize: vertical; }
    ============================================================ */
 .av { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; color-scheme: dark; }
 .av ::selection { background: rgba(52, 211, 153, 0.25); color: #ecfdf5; }
-/* Preflight is off (to protect app pages), so zero browser default margins here. */
-.av :where(h1, h2, h3, h4, h5, p, figure, ul, ol) { margin: 0; }
-.av :where(ul, ol) { list-style: none; padding: 0; }
-
-/* Form-control reset (preflight is off). Without it, buttons/inputs lacking an
-   explicit bg-* class fall back to the browser's LIGHT form styling — light
-   pills with light text, invisible on the dark theme. Low-specificity :where()
-   so every Tailwind utility class still wins. */
-.av :where(button, input, select, textarea) {
-  background-color: transparent;
-  color: inherit;
-  font: inherit;
-  letter-spacing: inherit;
+/* Preflight is off, so these resets stand in for it. They MUST sit in
+   layer(base): base loses to layer(utilities), so Tailwind classes win, while
+   author base styles still beat the browser's LIGHT form-control defaults
+   (light pills with light text, invisible on the dark theme). */
+@layer base {
+  .av :where(h1, h2, h3, h4, h5, p, figure, ul, ol) { margin: 0; }
+  .av :where(ul, ol) { list-style: none; padding: 0; }
+  .av :where(button, input, select, textarea) {
+    background-color: transparent;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+  }
+  .av :where(button) { border: 0; cursor: pointer; }
 }
-.av :where(button) { border: 0; cursor: pointer; }
 
 /* faint engineering grid behind the hero */
 .av-grid {

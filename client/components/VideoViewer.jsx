@@ -340,11 +340,11 @@ export function VideoViewer({ content, user, onBalanceChange }) {
             Billed per second of playback. Pausing costs nothing; rewatching a scene bills again.
           </p>
           <button
-            className="mt-3 text-sm text-zinc-500 underline-offset-4 transition-colors hover:text-zinc-300 hover:underline"
+            className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-white/35 hover:text-white"
             onClick={finishSession}
             type="button"
           >
-            Finish session
+            Finish session &amp; settle
           </button>
         </div>
 

@@ -244,6 +244,12 @@ export function VideoViewer({ content, user, onBalanceChange }) {
     }
   }
 
+  async function finishSession() {
+    videoRef.current?.pause();
+    setIsPlaying(false);
+    await completeSession();
+  }
+
   function handleApprove(amountUsd) {
     const amt = Math.max(0.01, Number(amountUsd) || DEFAULT_CAP_USD);
     setCapUsd(amt);
@@ -333,6 +339,13 @@ export function VideoViewer({ content, user, onBalanceChange }) {
           <p className="mt-1.5 text-[11.5px] text-zinc-600">
             Billed per second of playback. Pausing costs nothing; rewatching a scene bills again.
           </p>
+          <button
+            className="mt-3 text-sm text-zinc-500 underline-offset-4 transition-colors hover:text-zinc-300 hover:underline"
+            onClick={finishSession}
+            type="button"
+          >
+            Finish session
+          </button>
         </div>
 
         {error && !needsExtend ? (

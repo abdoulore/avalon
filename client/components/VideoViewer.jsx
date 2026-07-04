@@ -293,7 +293,13 @@ export function VideoViewer({ content, user, onBalanceChange }) {
     <section className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
       {/* Player column */}
       <div className="min-w-0">
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900">
+        {/* While a gate overlays the player, a phone-width 16:9 box is too short
+            for its controls — hold a minimum height until approval. */}
+        <div
+          className={`relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900 ${
+            !approved || needsExtend ? "min-h-[470px] sm:min-h-0" : ""
+          }`}
+        >
           {!approved ? <SessionGate mode="approve" defaultAmount={capUsd} max={capMaxUsd} overlay onApprove={handleApprove} /> : null}
           {needsExtend ? <SessionGate mode="extend" overlay onApprove={extendAllowance} busy={extendBusy} /> : null}
           <video

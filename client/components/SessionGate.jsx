@@ -10,14 +10,17 @@ const PRESETS = [0.06, 0.25, 1, 5];
 // One approval moment. mode "approve" lets the user CHOOSE the session cap (preset
 // or custom); mode "extend" is the quick top-up after the allowance runs out.
 export function SessionGate({ mode = "approve", defaultAmount = 0.25, max = Infinity, overlay = false, onApprove, busy = false }) {
+  // flex + m-auto (not grid centering): when the host box is shorter than the
+  // gate — a 16:9 player on a phone — the content scrolls from the top instead
+  // of clipping equally off both ends with the button unreachable.
   const wrap = overlay
-    ? "absolute inset-0 z-10 grid place-items-center rounded-[inherit] bg-ink-950/85 p-6 backdrop-blur-sm"
-    : "grid place-items-center p-6";
+    ? "absolute inset-0 z-10 flex overflow-y-auto rounded-[inherit] bg-ink-950/85 p-6 backdrop-blur-sm"
+    : "flex p-6";
 
   if (mode === "extend") {
     return (
       <div className={wrap}>
-        <div className="max-w-sm text-center">
+        <div className="m-auto max-w-sm text-center">
           <div className="mx-auto mb-4 grid h-11 w-11 place-items-center rounded-full border border-stop/40 bg-stop/10 text-stop">
             <Plus size={18} />
           </div>
@@ -49,7 +52,7 @@ function ApproveCard({ wrap, defaultAmount, max, onApprove, busy }) {
 
   return (
     <div className={wrap}>
-      <div className="w-full max-w-sm text-center">
+      <div className="m-auto w-full max-w-sm text-center">
         <div className="mx-auto mb-4 grid h-11 w-11 place-items-center rounded-full border border-brand/40 bg-brand/10 text-brand">
           <ShieldCheck size={18} />
         </div>

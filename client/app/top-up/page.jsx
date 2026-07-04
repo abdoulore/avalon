@@ -3,7 +3,7 @@
 import { Check, Copy, CreditCard, ExternalLink, Loader2, Wallet } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "../../components/AppShell";
-import { AdminTokenField, Card, BTN, RefreshButton } from "../../components/ui";
+import { Card, BTN, RefreshButton } from "../../components/ui";
 import { api, formatMoney } from "../../lib/api";
 import { usePaymentMode } from "../../hooks/usePaymentMode";
 import { addressUrl, isTxHash, txUrl } from "../../lib/explorer";
@@ -202,10 +202,6 @@ function GatewayDeposit() {
             className="w-20 bg-transparent px-1.5 py-1.5 font-mono text-sm tabular-nums text-zinc-100 outline-none disabled:opacity-50"
           />
         </span>
-      </div>
-
-      <div className="mt-4">
-        <AdminTokenField hint="On-chain deposits are admin-gated on this demo deployment." />
       </div>
 
       <button className={`${BTN} mt-4 w-full py-3`} type="button" onClick={deposit} disabled={busy || amount <= 0}>

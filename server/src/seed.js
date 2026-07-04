@@ -132,4 +132,5 @@ await LedgerEntry.create({
 });
 
 console.log(`Seeded Avalon demo data: ${videoDocs.length} videos, ${bookDocs.length} books.`);
+console.log("Circle mode? Also run: node src/scripts/setupDemoWallet.js (provisions + funds the demo account's wallet).");
 process.exit(0);

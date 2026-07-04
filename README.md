@@ -105,8 +105,8 @@ Open http://localhost:3000, pick a title, approve, and watch the meter. `PAYMENT
 
 One-time setup, then `PAYMENT_MODE=circle`:
 
-1. Create a Circle developer-controlled wallet set and an **EOA** buyer wallet on `ARC-TESTNET`; register an entity secret. Put the IDs in `server/.env` (`CIRCLE_API_KEY`, `CIRCLE_ENTITY_SECRET`, `CIRCLE_WALLET_SET_ID`, `CIRCLE_BUYER_WALLET_ID`, `CIRCLE_BUYER_ADDRESS`).
-2. Fund the buyer wallet with test USDC (faucet.circle.com), then deposit into Gateway. Either run `node src/scripts/gatewayDeposit.js 0.5`, or do it in the app on the **Top up** page (it shows the wallet balance + address and runs the same approve + deposit on-chain). Both share `gatewayDepositService`.
+1. Create a Circle developer-controlled wallet set and an **EOA** project wallet on `ARC-TESTNET`; register an entity secret. Put the IDs in `server/.env` (`CIRCLE_API_KEY`, `CIRCLE_ENTITY_SECRET`, `CIRCLE_WALLET_SET_ID`, `CIRCLE_BUYER_WALLET_ID`, `CIRCLE_BUYER_ADDRESS`). This wallet is the treasury: it sponsors fees and funds the demo allowance; users (including the demo account) settle from their own per-user wallets.
+2. Fund the project wallet with test USDC (faucet.circle.com), then run `node src/scripts/setupDemoWallet.js` — it provisions the demo account's own wallet, transfers it an allowance, and deposits into Gateway. Rerun it anytime to refill. (Signed-in users get their own wallet at signup; the **Top up** page shows their address and runs the same approve + deposit on-chain.)
 3. Set `DEEPSEEK_API_KEY` and `AGENT_REASONING=true` to enable the live agent.
 4. Optional: `ARC_EXPLORER_URL` (default `https://testnet.arcscan.app`) for the verify-on-chain links.
 

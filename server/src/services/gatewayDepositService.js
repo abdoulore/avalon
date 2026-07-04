@@ -82,6 +82,25 @@ class GatewayDepositService {
     };
   }
 
+  // Plain ERC-20 USDC transfer between wallets (e.g. treasury -> demo wallet).
+  // Executed by the SOURCE wallet; returns the confirmed tx hash.
+  async transferUsdc({ fromWalletId = env.circleBuyerWalletId, toAddress, amountUsd }) {
+    const usd = Number(amountUsd);
+    if (!Number.isFinite(usd) || usd <= 0) {
+      throw new Error("Transfer amount must be greater than zero.");
+    }
+    if (!toAddress) {
+      throw new Error("Transfer needs a destination address.");
+    }
+    const tx = await execContract(getCircleWalletClient(), {
+      walletId: fromWalletId,
+      contractAddress: USDC,
+      abiFunctionSignature: "transfer(address,uint256)",
+      abiParameters: [toAddress, String(Math.round(usd * 1_000_000))],
+    });
+    return { txHash: tx?.txHash || "", transferredUsd: usd };
+  }
+
   // approve -> deposit -> reread. Returns before/after balances + both tx hashes.
   async deposit({ amountUsd, walletId = env.circleBuyerWalletId, address = env.circleBuyerAddress }) {
     const usd = Number(amountUsd);

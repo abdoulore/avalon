@@ -2,17 +2,16 @@ import { env } from "../config/env.js";
 import { User } from "../models/User.js";
 import { getCircleWalletClient } from "../payments/circleWalletSigner.js";
 
-const DEMO_EMAIL = "demo@avalon.local";
-
 /**
  * Resolves which Circle wallet a user signs and settles with (circle mode).
  *
- * - A user with a provisioned wallet uses their own EOA.
- * - The demo account maps to the funded project wallet from env — it never
- *   gets its own wallet, so the shared demo pool stays exactly as it was.
- * - Anyone else is provisioned lazily on first need (normally signup already
- *   did it; this covers accounts created before Tier B or a failed signup
- *   provisioning).
+ * Every user — including the demo account — has their own EOA; the project
+ * wallet from env is pure treasury (sponsors fees, funds the demo allowance
+ * via scripts/setupDemoWallet.js) and no user settles from it. Users are
+ * provisioned lazily on first need (normally signup already did it; this
+ * covers earlier accounts or a failed signup provisioning). NOTE: circle-mode
+ * setup must run setupDemoWallet.js once, or the demo account auto-provisions
+ * an EMPTY wallet and can't watch anything.
  *
  * Accepts a user document or a user id.
  */
@@ -23,9 +22,6 @@ export async function walletFor(userLike) {
   }
   if (user.circleWalletId && user.circleWalletAddress) {
     return { walletId: user.circleWalletId, address: user.circleWalletAddress };
-  }
-  if (user.email === DEMO_EMAIL) {
-    return { walletId: env.circleBuyerWalletId, address: env.circleBuyerAddress };
   }
   return provisionUserWallet(user);
 }

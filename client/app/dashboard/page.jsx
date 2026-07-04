@@ -163,11 +163,11 @@ export default function DashboardPage() {
 }
 
 function formatDate(value) {
-  if (!value) return "—";
+  if (!value) return "-";
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
 function shortRef(ref) {
-  if (!ref) return "—";
+  if (!ref) return "-";
   return ref.length > 18 ? `${ref.slice(0, 10)}…${ref.slice(-4)}` : ref;
 }

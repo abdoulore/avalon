@@ -294,7 +294,7 @@ export function VideoViewer({ content, user, onBalanceChange }) {
       {/* Player column */}
       <div className="min-w-0">
         {/* While a gate overlays the player, a phone-width 16:9 box is too short
-            for its controls — hold a minimum height until approval. */}
+            for its controls; hold a minimum height until approval. */}
         <div
           className={`relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900 ${
             !approved || needsExtend ? "min-h-[470px] sm:min-h-0" : ""

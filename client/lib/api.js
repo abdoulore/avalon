@@ -11,7 +11,7 @@ export function getApiUrl() {
 }
 
 // Admin token for the gated endpoints (on-chain deposit). Kept in
-// sessionStorage only — never in code or the bundle; sent as x-admin-token.
+// sessionStorage only, never in code or the bundle; sent as x-admin-token.
 const ADMIN_TOKEN_KEY = "avalon-admin-token";
 
 export function getAdminToken() {

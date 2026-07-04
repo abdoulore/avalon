@@ -6,8 +6,8 @@ import { Check, ShieldCheck } from "lucide-react";
 
 /**
  * The hero signature: a live, self-running miniature of Avalon's money UI.
- * It simulates one metered session — approve once, draw per tick, the agent
- * decides continue → throttle → stop, then a batch settles on Arc — and loops.
+ * It simulates one metered session (approve once, draw per tick, the agent
+ * decides continue / throttle / stop, then a batch settles on Arc) and loops.
  * Not a fake screenshot: it's a real, smaller version of the in-app MoneyMeter
  * + AgentBanner. Honest about being a demo via the "Live session" label.
  */

@@ -11,7 +11,7 @@ const PRESETS = [0.06, 0.25, 1, 5];
 // or custom); mode "extend" is the quick top-up after the allowance runs out.
 export function SessionGate({ mode = "approve", defaultAmount = 0.25, max = Infinity, overlay = false, onApprove, busy = false }) {
   // flex + m-auto (not grid centering): when the host box is shorter than the
-  // gate — a 16:9 player on a phone — the content scrolls from the top instead
+  // gate (a 16:9 player on a phone) the content scrolls from the top instead
   // of clipping equally off both ends with the button unreachable.
   const wrap = overlay
     ? "absolute inset-0 z-10 flex overflow-y-auto rounded-[inherit] bg-ink-950/85 p-6 backdrop-blur-sm"

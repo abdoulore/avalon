@@ -178,10 +178,10 @@ function TxCard({ tx, circle, explorerUrl }) {
           {circle && !onchainHash ? (
             <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
               Accepted by Circle Gateway, which folds many signed authorizations into periodic on-chain batches.
-              Individual transfers inside a batch are not separately visible on the explorer{" "}
+              Individual transfers inside a batch are not separately visible on the explorer
               {explorerUrl ? (
                 <>
-                  — the batching pipeline itself is:{" "}
+                  , but the batching pipeline itself is:{" "}
                   <a
                     href={addressUrl(explorerUrl, GATEWAY_WALLET_ADDRESS)}
                     target="_blank"
@@ -213,7 +213,7 @@ function TxCard({ tx, circle, explorerUrl }) {
 }
 
 function AddressTag({ address, label, explorerUrl }) {
-  if (!address) return <span className="text-zinc-600">{label} —</span>;
+  if (!address) return <span className="text-zinc-600">{label} -</span>;
   const link = addressUrl(explorerUrl, address);
   const inner = (
     <>
@@ -252,7 +252,7 @@ function CopyButton({ value }) {
 }
 
 function formatDate(value) {
-  if (!value) return "—";
+  if (!value) return "-";
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",

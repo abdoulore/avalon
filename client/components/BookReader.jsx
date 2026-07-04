@@ -16,7 +16,7 @@ const DEFAULT_CAP_USD = 0.25; // pre-selected budget; the user can change it at 
 // Continuous-scroll reader over the per-page billing spine: pages you've paid
 // for render stacked; scrolling near the bottom bills the NEXT page through
 // usage:page and appends it. Refusal (allowance out) shows an inline extend
-// card instead of more text — the page is never served unbilled.
+// card instead of more text; the page is never served unbilled.
 export function BookReader({ content, user, onBalanceChange }) {
   const sessionRef = useRef(null);
   const socketRef = useRef(null);
@@ -255,10 +255,13 @@ export function BookReader({ content, user, onBalanceChange }) {
           </span>
         </div>
 
-        <div className={`relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900 ${!approved ? "min-h-[470px]" : ""}`}>
+        {/* No overflow-hidden here: it would turn this card into the sticky
+            containing block and the progress bar would never stick. Corners are
+            rounded per-element instead. */}
+        <div className={`relative rounded-2xl border border-white/10 bg-ink-900 ${!approved ? "min-h-[470px]" : ""}`}>
           {!approved ? <SessionGate mode="approve" defaultAmount={capUsd} max={capMaxUsd} overlay onApprove={handleApprove} /> : null}
 
-          <div className="sticky top-16 z-[5] flex items-center justify-between border-b border-white/[0.06] bg-ink-900/90 px-7 py-3 backdrop-blur-sm sm:px-10">
+          <div className="sticky top-16 z-[5] flex items-center justify-between rounded-t-2xl border-b border-white/[0.06] bg-ink-900/90 px-7 py-3 backdrop-blur-sm sm:px-10">
             <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-zinc-500">
               {unlocked}{totalPages ? ` of ${totalPages}` : ""} pages unlocked
             </span>
@@ -296,7 +299,7 @@ export function BookReader({ content, user, onBalanceChange }) {
                     <Loader2 size={14} className="av-spin" /> Unlocking page {unlocked + 1} ({formatMoney(ratePerPage)})…
                   </>
                 ) : (
-                  <>Keep scrolling — the next page bills {formatMoney(ratePerPage)} as it loads.</>
+                  <>Keep scrolling. The next page bills {formatMoney(ratePerPage)} as it loads.</>
                 )}
               </div>
             ) : null}

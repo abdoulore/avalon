@@ -112,7 +112,7 @@ export function AuthScreen({ mode }) {
             {busy === "demo" ? <Loader2 size={16} className="av-spin" /> : <Sparkles size={16} />} Try the demo
           </button>
           <p className="mt-2 text-center text-[11.5px] leading-relaxed text-zinc-600">
-            One click, no account — a shared demo profile with test USDC.
+            One click, no account: a shared demo profile with test USDC.
           </p>
         </Card>
 

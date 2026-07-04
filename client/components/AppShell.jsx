@@ -62,7 +62,8 @@ export function AppShell({ children, requireAuth = true }) {
             Avalon
           </Link>
 
-          <div className="hidden items-center gap-1 md:flex">
+          {/* Seven links need real width; anything under lg gets the sheet menu. */}
+          <div className="hidden items-center gap-1 lg:flex">
             {LINKS.map(({ href, label, Icon }) => {
               const active = pathname === href || (href === "/app" && pathname === "/app");
               return (
@@ -98,8 +99,8 @@ export function AppShell({ children, requireAuth = true }) {
                   signOut();
                   router.replace("/login");
                 }}
-                title={`Signed in as ${user.name} — sign out`}
-                className="hidden items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-[12px] text-zinc-400 transition-colors hover:border-white/25 hover:text-white md:inline-flex"
+                title={`Signed in as ${user.name}. Sign out`}
+                className="hidden items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-[12px] text-zinc-400 transition-colors hover:border-white/25 hover:text-white lg:inline-flex"
               >
                 <span className="max-w-[12ch] truncate">{user.name}</span>
                 <LogOut size={13} />
@@ -109,7 +110,7 @@ export function AppShell({ children, requireAuth = true }) {
               type="button"
               onClick={() => setOpen((v) => !v)}
               aria-label={open ? "Close menu" : "Open menu"}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-zinc-300 md:hidden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-zinc-300 lg:hidden"
             >
               {open ? <X size={18} /> : <Menu size={18} />}
             </button>
@@ -117,7 +118,7 @@ export function AppShell({ children, requireAuth = true }) {
         </nav>
 
         {open ? (
-          <div className="border-t border-white/10 bg-ink-950/95 px-5 py-3 backdrop-blur-md md:hidden">
+          <div className="border-t border-white/10 bg-ink-950/95 px-5 py-3 backdrop-blur-md lg:hidden">
             <div className="grid gap-1">
               {LINKS.map(({ href, label, Icon }) => {
                 const active = pathname === href;

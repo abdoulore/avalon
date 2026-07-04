@@ -30,7 +30,7 @@
 :root {
   /* Warm editorial paper. Color is rationed: paper + ink monochrome chrome,
      one quiet brand accent, and saturation reserved for live agent events. */
-  /* Dark "money-in-motion" — the app pages share the landing's palette so the
+  /* Dark "money-in-motion": the app pages share the landing's palette so the
      whole product reads as one surface. Near-black ink, one electric accent
      (emerald = live money), color rationed to agent live-events. */
   --paper: #06070a;         /* page background (ink-950) */
@@ -382,7 +382,7 @@ html, body {
 }
 
 /* ============================================================
-   LANDING (dark "money-in-motion") — ambient helpers
+   LANDING (dark "money-in-motion") ambient helpers
    Scoped under .av so none of it leaks into the app pages.
    ============================================================ */
 .av { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; color-scheme: dark; }

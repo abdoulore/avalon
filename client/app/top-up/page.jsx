@@ -252,7 +252,7 @@ function BalanceTile({ label, hint, value, loading, accent = false }) {
     <div className={`rounded-xl border p-4 ${accent ? "border-brand/20 bg-brand/[0.05]" : "border-white/10 bg-ink-950/50"}`}>
       <div className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-zinc-500">{label}</div>
       <div className={`mt-1.5 font-mono text-xl font-medium tabular-nums ${accent ? "text-brand" : "text-white"}`}>
-        {loading ? "…" : value == null ? "—" : formatMoney(value)}
+        {loading ? "…" : value == null ? "-" : formatMoney(value)}
       </div>
       <div className="mt-0.5 text-[12px] text-zinc-600">{hint}</div>
     </div>
@@ -298,13 +298,13 @@ function TxLine({ label, hash, explorerUrl }) {
           {short(hash)} <ExternalLink size={12} />
         </a>
       ) : (
-        <span title={hash}>{hash ? short(hash) : "—"}</span>
+        <span title={hash}>{hash ? short(hash) : "-"}</span>
       )}
     </div>
   );
 }
 
 function short(v) {
-  if (!v) return "—";
+  if (!v) return "-";
   return v.length > 18 ? `${v.slice(0, 10)}…${v.slice(-6)}` : v;
 }

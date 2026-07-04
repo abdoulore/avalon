@@ -39,8 +39,7 @@ export default function LandingPage() {
 
         <div className="relative mx-auto grid w-full max-w-[1180px] items-center gap-14 px-5 sm:px-8 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.16em] text-zinc-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand av-ping" />
+            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.16em] text-zinc-400">
               Usage-based media on Arc
             </span>
 
@@ -90,8 +89,7 @@ export default function LandingPage() {
       {/* ========================= HOW IT WORKS ====================== */}
       <section id="how" className="mx-auto max-w-[1180px] scroll-mt-24 px-5 py-24 sm:px-8 sm:py-28">
         <Reveal>
-          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-brand">How it works</span>
-          <h2 className="mt-3 max-w-[20ch] text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+          <h2 className="max-w-[20ch] text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             One approval. Then the meter does the rest.
           </h2>
         </Reveal>
@@ -226,8 +224,7 @@ type      TransferWith
       <section id="creators" className="scroll-mt-24 border-t border-white/[0.06] bg-ink-900/30 py-24 sm:py-28">
         <div className="mx-auto grid max-w-[1180px] items-center gap-14 px-5 sm:px-8 lg:grid-cols-2">
           <Reveal>
-            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-brand">For creators</span>
-            <h2 className="mt-3 max-w-[18ch] text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            <h2 className="max-w-[18ch] text-3xl font-semibold tracking-tight text-white sm:text-4xl">
               Paid for every second watched.
             </h2>
             <p className="mt-4 max-w-[52ch] text-lg leading-relaxed text-zinc-400">

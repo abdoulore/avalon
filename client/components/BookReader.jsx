@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { api, formatMoney } from "../lib/api";
 import { getSocket } from "../lib/socket";
@@ -9,14 +9,21 @@ import { MoneyMeter } from "./MoneyMeter";
 import { AgentBanner } from "./AgentBanner";
 import { SessionGate } from "./SessionGate";
 import { UsageReceipt } from "./UsageReceipt";
-import { BTN, BTN_GHOST } from "./ui";
+import { BTN } from "./ui";
 
 const DEFAULT_CAP_USD = 0.25; // pre-selected budget; the user can change it at approval
 
+// Continuous-scroll reader over the per-page billing spine: pages you've paid
+// for render stacked; scrolling near the bottom bills the NEXT page through
+// usage:page and appends it. Refusal (allowance out) shows an inline extend
+// card instead of more text — the page is never served unbilled.
 export function BookReader({ content, user, onBalanceChange }) {
   const sessionRef = useRef(null);
   const socketRef = useRef(null);
-  const [page, setPage] = useState(1);
+  const sentinelRef = useRef(null);
+  const unlockingRef = useRef(false);
+  const [unlocked, setUnlocked] = useState(1); // highest page billed/rendered (page 1 is the free opener)
+  const [unlocking, setUnlocking] = useState(false);
   const [activeReadingDuration, setActiveReadingDuration] = useState(0);
   const [liveBalance, setLiveBalance] = useState(user?.balanceUsd || 0);
   const [chargedUsd, setChargedUsd] = useState(0);
@@ -35,11 +42,12 @@ export function BookReader({ content, user, onBalanceChange }) {
 
   const { circle, supportsTopUp, network } = usePaymentMode();
   const ratePerPage = Number(content.pricePerPageUsd || 0);
-  const pageText = bookText[page - 1];
+  const totalPages = Number(content.pages) || bookText.length;
   // The user picks the cap at approval. Mock can't exceed the local balance;
   // circle has no client-side ceiling (the server clamps to the Gateway pool).
   const capMaxUsd = circle ? Infinity : Math.max(0.01, Number(liveBalance) || 0);
   const meterCap = allowanceCapUsd ?? capUsd;
+  const finished = totalPages > 0 && unlocked >= totalPages;
 
   useEffect(() => {
     setLiveBalance(user?.balanceUsd || 0);
@@ -57,7 +65,9 @@ export function BookReader({ content, user, onBalanceChange }) {
 
   useEffect(() => {
     sessionRef.current = null;
-    setPage(1);
+    unlockingRef.current = false;
+    setUnlocked(1);
+    setUnlocking(false);
     setActiveReadingDuration(0);
     setChargedUsd(0);
     setCreatorEarned(0);
@@ -110,6 +120,33 @@ export function BookReader({ content, user, onBalanceChange }) {
     };
   }, [content._id]);
 
+  // The scroll trigger: when the sentinel under the last unlocked page comes
+  // into view, bill and append the next page. unlockingRef serializes bills;
+  // after a refusal or error the observer won't refire until the reader
+  // scrolls again or state (extend/approve) changes.
+  useEffect(() => {
+    if (!approved || needsExtend || finished || bookText.length === 0) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      async (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        if (unlockingRef.current) return;
+        unlockingRef.current = true;
+        setUnlocking(true);
+        try {
+          await unlockNextPage();
+        } finally {
+          unlockingRef.current = false;
+          setUnlocking(false);
+        }
+      },
+      { rootMargin: "240px 0px" } // start the bill just before the reader hits the end
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [approved, needsExtend, finished, unlocked, bookText.length]);
+
   async function ensureSession() {
     if (sessionRef.current) return sessionRef.current;
     return new Promise((resolve, reject) => {
@@ -126,9 +163,11 @@ export function BookReader({ content, user, onBalanceChange }) {
     });
   }
 
-  // Bill the page through the allowance BEFORE rendering it. On refusal (402) the
-  // reader pauses at the current page; the next page is not served.
-  async function goToPage(nextPage) {
+  // Bill the next page through the allowance BEFORE rendering it. On refusal
+  // (402) the reader stops at the current page; the next page is not served.
+  async function unlockNextPage() {
+    const nextPage = unlocked + 1;
+    if (totalPages && nextPage > totalPages) return;
     setError("");
     try {
       const sessionId = await ensureSession();
@@ -141,11 +180,11 @@ export function BookReader({ content, user, onBalanceChange }) {
 
       if (!result?.ok || !result.served) {
         if (result?.needsReauth) setNeedsExtend(true);
-        else setError(result?.error || "Could not turn the page.");
+        else setError(result?.error || "Could not unlock the next page.");
         return; // do NOT advance
       }
 
-      setPage(nextPage);
+      setUnlocked(nextPage);
       if (typeof result.balanceUsd === "number") setLiveBalance(result.balanceUsd);
       setChargedUsd(result.session?.amountChargedUsd || result.session?.totalChargedUsd || 0);
       setCreatorEarned(result.session?.totalCreatorPayoutUsd || 0);
@@ -155,18 +194,9 @@ export function BookReader({ content, user, onBalanceChange }) {
     }
   }
 
-  function changePage(direction) {
-    // Exhausted or not yet approved: do not attempt the page turn. The gate is the
-    // action; this also prevents flashing the next page before the refusal lands.
-    if (needsExtend || !approved) return;
-    const nextPage = Math.min(Math.max(page + direction, 1), content.pages);
-    if (nextPage === page) return;
-    goToPage(nextPage);
-  }
-
   async function completeSession() {
     // Claim the id and clear the ref synchronously (like VideoViewer): a page
-    // turn after finishing must start a fresh session, not reuse the dead id.
+    // unlock after finishing must start a fresh session, not reuse the dead id.
     const sessionId = sessionRef.current;
     if (!sessionId) return;
     sessionRef.current = null;
@@ -225,32 +255,69 @@ export function BookReader({ content, user, onBalanceChange }) {
           </span>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900">
+        <div className={`relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900 ${!approved ? "min-h-[470px]" : ""}`}>
           {!approved ? <SessionGate mode="approve" defaultAmount={capUsd} max={capMaxUsd} overlay onApprove={handleApprove} /> : null}
-          {needsExtend ? <SessionGate mode="extend" overlay onApprove={extendAllowance} busy={extendBusy} /> : null}
-          <article className="min-h-[420px] p-7 sm:p-10" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-            <div className="mb-6 flex items-center justify-between font-sans">
-              <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-zinc-500">
-                Page {page}{content.pages ? ` of ${content.pages}` : ""}
-              </span>
-              <span className="text-[12px] text-zinc-600">{content.title}</span>
-            </div>
-            {pageText ? (
-              pageText.split("\n\n").map((para, i) => (
-                <p key={i} className="mt-4 text-[17px] leading-[1.85] text-zinc-300 first:mt-0">
-                  {para}
-                </p>
-              ))
+
+          <div className="sticky top-16 z-[5] flex items-center justify-between border-b border-white/[0.06] bg-ink-900/90 px-7 py-3 backdrop-blur-sm sm:px-10">
+            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-zinc-500">
+              {unlocked}{totalPages ? ` of ${totalPages}` : ""} pages unlocked
+            </span>
+            <span className="text-[12px] text-zinc-600">{content.title}</span>
+          </div>
+
+          <article className="p-7 sm:p-10" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
+            {bookText.length === 0 ? (
+              <p className="text-[15px] text-zinc-500">Loading the book…</p>
             ) : (
-              <p className="text-[15px] text-zinc-500">Loading this page…</p>
+              bookText.slice(0, unlocked).map((text, idx) => (
+                <section key={idx}>
+                  {idx > 0 ? (
+                    <div className="my-8 flex items-center gap-4 font-sans">
+                      <span className="h-px flex-1 bg-white/[0.06]" />
+                      <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-zinc-600">page {idx + 1}</span>
+                      <span className="h-px flex-1 bg-white/[0.06]" />
+                    </div>
+                  ) : null}
+                  {String(text).split("\n\n").map((para, i) => (
+                    <p key={i} className="mt-4 text-[17px] leading-[1.85] text-zinc-300 first:mt-0">
+                      {para}
+                    </p>
+                  ))}
+                </section>
+              ))
             )}
+
+            {/* Scroll frontier: billing indicator, refusal card, or the end. */}
+            <div ref={sentinelRef} />
+            {approved && !finished && bookText.length > 0 ? (
+              <div className="mt-8 flex items-center justify-center gap-2 font-sans text-[12.5px] text-zinc-500">
+                {needsExtend ? null : unlocking ? (
+                  <>
+                    <Loader2 size={14} className="av-spin" /> Unlocking page {unlocked + 1} ({formatMoney(ratePerPage)})…
+                  </>
+                ) : (
+                  <>Keep scrolling — the next page bills {formatMoney(ratePerPage)} as it loads.</>
+                )}
+              </div>
+            ) : null}
+            {needsExtend ? (
+              <div className="mt-6 rounded-xl border border-stop/30 bg-ink-950/60 font-sans">
+                <SessionGate mode="extend" onApprove={extendAllowance} busy={extendBusy} />
+              </div>
+            ) : null}
+            {finished ? (
+              <div className="mt-10 text-center font-sans">
+                <div className="mx-auto flex max-w-[240px] items-center gap-4">
+                  <span className="h-px flex-1 bg-white/10" />
+                  <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-zinc-500">The end</span>
+                  <span className="h-px flex-1 bg-white/10" />
+                </div>
+              </div>
+            ) : null}
           </article>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <button className={BTN_GHOST} disabled={page === 1 || !approved || needsExtend} onClick={() => changePage(-1)} type="button">
-            <ChevronLeft size={16} /> Previous
-          </button>
           <p className="font-mono text-[12px] tabular-nums text-zinc-500">
             {activeReadingDuration}s reading · creator earned <span className="text-zinc-300">{formatMoney(creatorEarned)}</span> ·{" "}
             {circle ? (
@@ -259,20 +326,16 @@ export function BookReader({ content, user, onBalanceChange }) {
               <>balance <span className="text-zinc-300">{formatMoney(liveBalance)}</span></>
             )}
           </p>
-          <button className={BTN} disabled={page === content.pages || !approved || needsExtend} onClick={() => changePage(1)} type="button">
-            Next <ChevronRight size={16} />
-          </button>
+          {hasSession ? (
+            <button className={BTN} onClick={completeSession} type="button">
+              Finish session &amp; settle
+            </button>
+          ) : null}
         </div>
 
         <p className="mt-2 text-[11.5px] text-zinc-600">
-          Each page bills once; pages you{"'"}ve already paid for stay free to revisit this session.
+          Each page bills once as you reach it; unlocked pages stay free to re-read this session.
         </p>
-
-        {hasSession ? (
-          <button className={`${BTN} mt-4`} onClick={completeSession} type="button">
-            Finish session &amp; settle
-          </button>
-        ) : null}
 
         {error && !needsExtend ? (
           <div className="mt-3 rounded-xl border border-throttle/40 bg-throttle/10 px-3.5 py-2.5 text-sm text-zinc-200">{error}</div>

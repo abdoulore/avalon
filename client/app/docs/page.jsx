@@ -159,7 +159,7 @@ export default function DocsPage() {
           <Section id="meter" eyebrow="Using Avalon" title="Watch & read">
             <P>
               Video bills per second through socket heartbeats while the tab is focused and playing; pausing or leaving
-              stops the meter. Books bill per page turn, and a page you already paid for is free on revisit. Every draw is
+              stops the meter. Books read as a continuous scroll and bill per page as you reach it; a page you already paid for is free on revisit. Every draw is
               an atomic deduction in integer USDC units, so concurrent draws can never overspend the cap.
             </P>
           </Section>

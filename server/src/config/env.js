@@ -19,6 +19,10 @@ export const env = {
   // when unset, all auth endpoints return 503 instead of signing with a
   // guessable default.
   jwtSecret: process.env.JWT_SECRET || "",
+  // Circle mode only: one-time test-USDC grant to a new user's Gateway wallet at
+  // signup, so they can watch immediately without hunting a faucet. 0 = off.
+  // Funded from the project treasury; a floor guard skips it when treasury is low.
+  signupGrantUsd: Math.max(0, Number(process.env.SIGNUP_GRANT_USD) || 0),
   circleApiKey: process.env.CIRCLE_API_KEY || "",
   circleGatewayBaseUrl: process.env.CIRCLE_GATEWAY_BASE_URL || "https://gateway-api-testnet.circle.com",
   circleGatewayEnv: process.env.CIRCLE_GATEWAY_ENV || "testnet",

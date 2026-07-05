@@ -10,7 +10,7 @@ const PRESETS = [0.06, 0.25, 1, 5];
 
 // One approval moment. mode "approve" lets the user CHOOSE the session cap (preset
 // or custom); mode "extend" is the quick top-up after the allowance runs out.
-export function SessionGate({ mode = "approve", defaultAmount = 0.25, max = Infinity, overlay = false, onApprove, busy = false }) {
+export function SessionGate({ mode = "approve", defaultAmount = 0.25, max = Infinity, overlay = false, onApprove, busy = false, circle = false }) {
   // flex + m-auto (not grid centering): when the host box is shorter than the
   // gate (a 16:9 player on a phone) the content scrolls from the top instead
   // of clipping equally off both ends with the button unreachable.
@@ -25,12 +25,16 @@ export function SessionGate({ mode = "approve", defaultAmount = 0.25, max = Infi
           <div className="mx-auto mb-4 grid h-11 w-11 place-items-center rounded-full border border-brand/40 bg-brand/10 text-brand">
             <Wallet size={18} />
           </div>
-          <h3 className="text-lg font-semibold tracking-tight text-white">Fund your wallet to start</h3>
+          <h3 className="text-lg font-semibold tracking-tight text-white">
+            {circle ? "Fund your wallet to start" : "Add balance to start"}
+          </h3>
           <p className="mx-auto mt-2 max-w-[38ch] text-sm leading-relaxed text-zinc-400">
-            Watching settles from your Gateway balance on Arc, and yours is empty. Add test USDC, then come back to press play.
+            {circle
+              ? "Watching settles from your Gateway balance on Arc, and yours is empty. Add test USDC, then come back to press play."
+              : "You are out of test balance. Add more on the Top up page, then come back to press play."}
           </p>
           <Link href="/top-up" className={`${BTN} mt-5`}>
-            <Wallet size={16} /> Fund your wallet <ArrowRight size={15} />
+            <Wallet size={16} /> {circle ? "Fund your wallet" : "Add balance"} <ArrowRight size={15} />
           </Link>
         </div>
       </div>
@@ -57,6 +61,16 @@ export function SessionGate({ mode = "approve", defaultAmount = 0.25, max = Infi
   }
 
   return <ApproveCard wrap={wrap} defaultAmount={defaultAmount} max={max} onApprove={onApprove} busy={busy} />;
+}
+
+// A neutral overlay for transient states (checking balance, grant landing) that
+// covers the player like a gate but carries no action.
+export function StatusOverlay({ children }) {
+  return (
+    <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 rounded-[inherit] bg-ink-950/85 p-6 text-center text-sm text-zinc-400 backdrop-blur-sm">
+      {children}
+    </div>
+  );
 }
 
 function ApproveCard({ wrap, defaultAmount, max, onApprove, busy }) {

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "../../components/AppShell";
 import { Card, BTN, RefreshButton } from "../../components/ui";
 import { api, formatMoney } from "../../lib/api";
+import { clearGatewayBalanceCache } from "../../hooks/useGatewayFunding";
 import { usePaymentMode } from "../../hooks/usePaymentMode";
 import { addressUrl, isTxHash, txUrl } from "../../lib/explorer";
 
@@ -122,6 +123,7 @@ function GatewayDeposit() {
     try {
       const res = await api("/users/me/gateway-deposit", { method: "POST", body: JSON.stringify({ amountUsd: amount }) });
       setResult(res);
+      clearGatewayBalanceCache(); // so the next title-open sees the new balance, not a stale $0
       await loadBalances(); // refresh wallet (down) and Gateway (up)
     } catch (err) {
       setError(err.message);

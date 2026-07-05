@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { api, formatMoney } from "../lib/api";
 import { getSocket } from "../lib/socket";
@@ -8,7 +9,7 @@ import { useGatewayFunding } from "../hooks/useGatewayFunding";
 import { MoneyMeter } from "./MoneyMeter";
 import { BTN } from "./ui";
 import { AgentBanner } from "./AgentBanner";
-import { SessionGate } from "./SessionGate";
+import { SessionGate, StatusOverlay } from "./SessionGate";
 import { UsageReceipt } from "./UsageReceipt";
 
 const HEARTBEAT_MS = 5000;
@@ -40,10 +41,16 @@ export function VideoViewer({ content, user, onBalanceChange }) {
 
   const { circle, supportsTopUp, network } = usePaymentMode();
   const ratePerSecond = Number(content.pricePerSecondUsd || 0);
-  // Circle mode: is the wallet funded enough to bill even one second? Blocks the
-  // approve gate until funded, so playback never starts on an empty wallet.
-  const { checking: checkingFunds, funded } = useGatewayFunding({ minimumUsd: ratePerSecond });
-  const showFundGate = circle && (!funded || needsFunding);
+  // Is there enough to bill even one second? Blocks the approve gate until
+  // funded, so playback never starts on an empty wallet. Circle reads the chain;
+  // mock checks the local balance. `provisioning` = a signup grant is landing.
+  const { checking: checkingFunds, funded, provisioning } = useGatewayFunding({
+    minimumUsd: ratePerSecond,
+    localBalanceUsd: liveBalance,
+  });
+  // Mock only gates before approval; once watching, exhaustion uses the extend
+  // flow. Circle's needsFunding can also fire reactively mid-first-tick.
+  const showFundGate = (circle && (!funded || needsFunding)) || (!circle && !approved && !funded);
   // The user picks the cap at approval. Mock can't exceed the local balance;
   // circle has no client-side ceiling (the server clamps to the Gateway pool).
   const capMaxUsd = circle ? Infinity : Math.max(0.01, Number(liveBalance) || 0);
@@ -221,7 +228,7 @@ export function VideoViewer({ content, user, onBalanceChange }) {
   }
 
   async function handlePlay() {
-    if (needsExtend || needsFunding || showFundGate || !approved) {
+    if (needsExtend || needsFunding || showFundGate || provisioning || !approved) {
       // Unfunded, exhausted, or not yet approved: never resume playback. A gate
       // (fund / extend / approve) is already shown over the player; a play attempt
       // just re-pauses. This catches keyboard play too, which the overlay doesn't.
@@ -310,17 +317,20 @@ export function VideoViewer({ content, user, onBalanceChange }) {
             for its controls; hold a minimum height until approval. */}
         <div
           className={`relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900 ${
-            checkingFunds || showFundGate || !approved || needsExtend ? "min-h-[470px] sm:min-h-0" : ""
+            checkingFunds || provisioning || showFundGate || !approved || needsExtend ? "min-h-[470px] sm:min-h-0" : ""
           }`}
         >
-          {/* Gate precedence: funding beats approval beats extend, so an unfunded
-              wallet is directed to /top-up instead of a dead approve/extend loop. */}
-          {showFundGate ? (
-            <SessionGate mode="fund" overlay />
+          {/* Gate precedence: provisioning (grant landing) and funding beat
+              approval beats extend, so an unfunded wallet is guided instead of
+              dropped into a dead approve/extend loop. */}
+          {provisioning ? (
+            <StatusOverlay>
+              <Loader2 size={16} className="av-spin" /> Setting up your wallet. This can take up to a minute.
+            </StatusOverlay>
+          ) : showFundGate ? (
+            <SessionGate mode="fund" overlay circle={circle} />
           ) : checkingFunds ? (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[inherit] bg-ink-950/85 p-6 text-sm text-zinc-400 backdrop-blur-sm">
-              Checking your wallet…
-            </div>
+            <StatusOverlay>Checking your wallet…</StatusOverlay>
           ) : !approved ? (
             <SessionGate mode="approve" defaultAmount={capUsd} max={capMaxUsd} overlay onApprove={handleApprove} />
           ) : needsExtend ? (

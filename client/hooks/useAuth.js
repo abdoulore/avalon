@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api, getAuthToken, setAuthToken } from "../lib/api";
+import { api, getAuthToken, setAuthToken, markGrantPending } from "../lib/api";
 import { resetSocket } from "../lib/socket";
 
 // Session state for the signed-in user. Each mount validates the stored token
@@ -23,9 +23,12 @@ export function useAuth() {
     return () => { alive = false; };
   }, []);
 
-  // login/signup/demo all resolve to the same shape: { token, user }.
+  // login/signup/demo all resolve to the same shape: { token, user }. A fresh
+  // signup may also carry grantPending, meaning test funds are being sent to the
+  // new wallet in the background (the funding gate polls for them).
   const acceptSession = useCallback((payload) => {
     setAuthToken(payload.token);
+    if (payload.grantPending) markGrantPending();
     resetSocket(); // next socket connects as this user
     setUser(payload.user);
     return payload.user;

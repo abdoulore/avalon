@@ -5,6 +5,7 @@ import { paymentMode } from "../payments/paymentMode.js";
 import { ensureDemoUser } from "./userController.js";
 import { signUserToken } from "../middleware/userAuth.js";
 import { provisionUserWallet } from "../services/userWalletService.js";
+import { grantStarterFunds } from "../services/starterGrantService.js";
 
 // Mock mode hands new users test money so they can watch immediately; circle
 // mode ignores the local balance entirely (funds live in the Gateway pool).
@@ -56,16 +57,26 @@ export async function signup(req, res) {
   // Circle mode: provision the user's own developer-controlled wallet now.
   // Best-effort — on failure the account still works and walletFor() retries
   // lazily the first time the wallet is actually needed.
+  let grantPending = false;
   if (paymentMode.name === "circle") {
     try {
       await provisionUserWallet(user);
     } catch (error) {
       console.error(`Wallet provisioning failed for ${user._id}: ${error.message}`);
     }
+    // Fund the new wallet in the BACKGROUND: the grant is three on-chain txs
+    // (~30s), far too slow to block the signup response on. The client polls the
+    // Gateway balance and shows a "setting up your wallet" state until it lands.
+    if (env.signupGrantUsd > 0) {
+      grantPending = true;
+      grantStarterFunds({ user }).catch((error) =>
+        console.error(`Starter grant failed for ${user._id}: ${error.message}`)
+      );
+    }
   }
 
   const fresh = await User.findById(user._id);
-  res.status(201).json({ token: signUserToken(fresh), user: publicUser(fresh) });
+  res.status(201).json({ token: signUserToken(fresh), user: publicUser(fresh), grantPending });
 }
 
 export async function login(req, res) {

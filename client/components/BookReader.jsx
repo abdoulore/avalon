@@ -8,7 +8,7 @@ import { usePaymentMode } from "../hooks/usePaymentMode";
 import { useGatewayFunding } from "../hooks/useGatewayFunding";
 import { MoneyMeter } from "./MoneyMeter";
 import { AgentBanner } from "./AgentBanner";
-import { SessionGate } from "./SessionGate";
+import { SessionGate, StatusOverlay } from "./SessionGate";
 import { UsageReceipt } from "./UsageReceipt";
 import { BTN } from "./ui";
 
@@ -45,10 +45,14 @@ export function BookReader({ content, user, onBalanceChange }) {
   const { circle, supportsTopUp, network } = usePaymentMode();
   const ratePerPage = Number(content.pricePerPageUsd || 0);
   const totalPages = Number(content.pages) || bookText.length;
-  // Circle mode: is the wallet funded enough to bill even one page? Blocks the
-  // approve gate until funded, so reading never starts on an empty wallet.
-  const { checking: checkingFunds, funded } = useGatewayFunding({ minimumUsd: ratePerPage });
-  const showFundGate = circle && (!funded || needsFunding);
+  // Is there enough to bill even one page? Blocks the approve gate until funded,
+  // so reading never starts on an empty wallet. Circle reads the chain; mock
+  // checks the local balance. `provisioning` = a signup grant is landing.
+  const { checking: checkingFunds, funded, provisioning } = useGatewayFunding({
+    minimumUsd: ratePerPage,
+    localBalanceUsd: liveBalance,
+  });
+  const showFundGate = (circle && (!funded || needsFunding)) || (!circle && !approved && !funded);
   // The user picks the cap at approval. Mock can't exceed the local balance;
   // circle has no client-side ceiling (the server clamps to the Gateway pool).
   const capMaxUsd = circle ? Infinity : Math.max(0.01, Number(liveBalance) || 0);
@@ -135,7 +139,7 @@ export function BookReader({ content, user, onBalanceChange }) {
   // after a refusal or error the observer won't refire until the reader
   // scrolls again or state (extend/approve) changes.
   useEffect(() => {
-    if (!approved || needsExtend || needsFunding || finished || bookText.length === 0) return;
+    if (!approved || needsExtend || needsFunding || provisioning || finished || bookText.length === 0) return;
     const el = sentinelRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
@@ -155,7 +159,7 @@ export function BookReader({ content, user, onBalanceChange }) {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [approved, needsExtend, needsFunding, finished, unlocked, bookText.length]);
+  }, [approved, needsExtend, needsFunding, provisioning, finished, unlocked, bookText.length]);
 
   async function ensureSession() {
     if (sessionRef.current) return sessionRef.current;
@@ -270,14 +274,17 @@ export function BookReader({ content, user, onBalanceChange }) {
             containing block and the progress bar would never stick. Corners are
             rounded per-element instead. */}
         <div className={`relative rounded-2xl border border-white/10 bg-ink-900 ${checkingFunds || showFundGate || !approved ? "min-h-[470px]" : ""}`}>
-          {/* Funding beats approval: an empty wallet is directed to /top-up
-              instead of an approve gate that would fail on the first page. */}
-          {showFundGate ? (
-            <SessionGate mode="fund" overlay />
+          {/* Provisioning (grant landing) and funding beat approval: an empty
+              wallet is guided instead of dropped into an approve gate that would
+              fail on the first page. */}
+          {provisioning ? (
+            <StatusOverlay>
+              <Loader2 size={16} className="av-spin" /> Setting up your wallet. This can take up to a minute.
+            </StatusOverlay>
+          ) : showFundGate ? (
+            <SessionGate mode="fund" overlay circle={circle} />
           ) : checkingFunds ? (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[inherit] bg-ink-950/85 p-6 text-sm text-zinc-400 backdrop-blur-sm">
-              Checking your wallet…
-            </div>
+            <StatusOverlay>Checking your wallet…</StatusOverlay>
           ) : !approved ? (
             <SessionGate mode="approve" defaultAmount={capUsd} max={capMaxUsd} overlay onApprove={handleApprove} />
           ) : null}

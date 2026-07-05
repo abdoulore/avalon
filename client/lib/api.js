@@ -40,6 +40,21 @@ export function setAuthToken(value) {
   else window.localStorage.removeItem(AUTH_TOKEN_KEY);
 }
 
+// A signup that kicked off a background starter grant sets this timestamp, so the
+// first title-open can poll for the incoming funds instead of showing "empty".
+const GRANT_PENDING_KEY = "avalon-grant-pending";
+
+export function markGrantPending() {
+  if (typeof window !== "undefined") window.localStorage.setItem(GRANT_PENDING_KEY, String(Date.now()));
+}
+export function getGrantPendingAt() {
+  if (typeof window === "undefined") return 0;
+  return Number(window.localStorage.getItem(GRANT_PENDING_KEY)) || 0;
+}
+export function clearGrantPending() {
+  if (typeof window !== "undefined") window.localStorage.removeItem(GRANT_PENDING_KEY);
+}
+
 export async function api(path, options = {}) {
   const adminToken = getAdminToken();
   const authToken = getAuthToken();

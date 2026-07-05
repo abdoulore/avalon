@@ -263,9 +263,13 @@ export class MeterService {
     if (!res.ok || res.reserved <= 0) {
       session.activityState = "paused";
       await session.save();
-      const err = new Error("Insufficient Gateway balance. Top up to continue.");
+      // The session could not reserve ANYTHING: the wallet has no usable Gateway
+      // balance. This is a funding problem, not a spent-allowance one, so flag it
+      // distinctly (needsFunding) — the client routes here to "fund your wallet",
+      // not to the "approve more" extend gate.
+      const err = new Error("Your Gateway balance is empty. Add funds to start watching.");
       err.status = 402;
-      err.needsReauth = true;
+      err.needsFunding = true;
       throw err;
     }
 

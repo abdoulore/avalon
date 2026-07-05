@@ -63,6 +63,7 @@ export function attachSocketServer(httpServer, { corsOrigin }) {
           stopAccess: error.status === 402,
           paymentRequired: error.paymentRequirement,
           needsReauth: Boolean(error.needsReauth), // allowance exhausted -> client offers "extend" (step 4)
+          needsFunding: Boolean(error.needsFunding), // empty Gateway balance -> client routes to funding
           remainingAtomic: error.remainingAtomic, // atomic units stranded at exhaustion, if any
         };
         if (sessionId) {
@@ -93,6 +94,7 @@ export function attachSocketServer(httpServer, { corsOrigin }) {
           error: normalizeError(error),
           stopAccess: error.status === 402,
           needsReauth: Boolean(error.needsReauth),
+          needsFunding: Boolean(error.needsFunding),
           remainingAtomic: error.remainingAtomic,
         };
         if (sessionId) {

@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { Plus, ShieldCheck } from "lucide-react";
+import { ArrowRight, Plus, ShieldCheck, Wallet } from "lucide-react";
 import { BTN } from "./ui";
 
 const money = (n) => `$${Number(n || 0).toFixed(2)}`;
@@ -16,6 +17,25 @@ export function SessionGate({ mode = "approve", defaultAmount = 0.25, max = Infi
   const wrap = overlay
     ? "absolute inset-0 z-10 flex overflow-y-auto rounded-[inherit] bg-ink-950/85 p-6 backdrop-blur-sm"
     : "flex p-6";
+
+  if (mode === "fund") {
+    return (
+      <div className={wrap}>
+        <div className="m-auto max-w-sm text-center">
+          <div className="mx-auto mb-4 grid h-11 w-11 place-items-center rounded-full border border-brand/40 bg-brand/10 text-brand">
+            <Wallet size={18} />
+          </div>
+          <h3 className="text-lg font-semibold tracking-tight text-white">Fund your wallet to start</h3>
+          <p className="mx-auto mt-2 max-w-[38ch] text-sm leading-relaxed text-zinc-400">
+            Watching settles from your Gateway balance on Arc, and yours is empty. Add test USDC, then come back to press play.
+          </p>
+          <Link href="/top-up" className={`${BTN} mt-5`}>
+            <Wallet size={16} /> Fund your wallet <ArrowRight size={15} />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (mode === "extend") {
     return (

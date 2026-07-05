@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { api, formatMoney } from "../lib/api";
 import { getSocket } from "../lib/socket";
 import { usePaymentMode } from "../hooks/usePaymentMode";
+import { useGatewayFunding } from "../hooks/useGatewayFunding";
 import { MoneyMeter } from "./MoneyMeter";
 import { AgentBanner } from "./AgentBanner";
 import { SessionGate } from "./SessionGate";
@@ -35,6 +36,7 @@ export function BookReader({ content, user, onBalanceChange }) {
   const [hasSession, setHasSession] = useState(false); // mirrors sessionRef for rendering
   const [allowanceCapUsd, setAllowanceCapUsd] = useState(null);
   const [needsExtend, setNeedsExtend] = useState(false);
+  const [needsFunding, setNeedsFunding] = useState(false);
   const [extendBusy, setExtendBusy] = useState(false);
   const [bookText, setBookText] = useState([]);
   const [capUsd, setCapUsd] = useState(DEFAULT_CAP_USD);
@@ -43,6 +45,10 @@ export function BookReader({ content, user, onBalanceChange }) {
   const { circle, supportsTopUp, network } = usePaymentMode();
   const ratePerPage = Number(content.pricePerPageUsd || 0);
   const totalPages = Number(content.pages) || bookText.length;
+  // Circle mode: is the wallet funded enough to bill even one page? Blocks the
+  // approve gate until funded, so reading never starts on an empty wallet.
+  const { checking: checkingFunds, funded } = useGatewayFunding({ minimumUsd: ratePerPage });
+  const showFundGate = circle && (!funded || needsFunding);
   // The user picks the cap at approval. Mock can't exceed the local balance;
   // circle has no client-side ceiling (the server clamps to the Gateway pool).
   const capMaxUsd = circle ? Infinity : Math.max(0.01, Number(liveBalance) || 0);
@@ -78,6 +84,7 @@ export function BookReader({ content, user, onBalanceChange }) {
     setHasSession(false);
     setAllowanceCapUsd(null);
     setNeedsExtend(false);
+    setNeedsFunding(false);
   }, [content._id]);
 
   useEffect(() => {
@@ -88,7 +95,10 @@ export function BookReader({ content, user, onBalanceChange }) {
       if (payload?.agentDecision) setAgentNote(payload.agentDecision);
       if (payload?.session?.allowance?.capAtomic) setAllowanceCapUsd(payload.session.allowance.capAtomic / 1e6);
       if (!payload?.ok) {
-        if (payload?.needsReauth) {
+        if (payload?.needsFunding) {
+          setNeedsFunding(true);
+          setError("");
+        } else if (payload?.needsReauth) {
           setNeedsExtend(true);
           setError("");
         }
@@ -125,7 +135,7 @@ export function BookReader({ content, user, onBalanceChange }) {
   // after a refusal or error the observer won't refire until the reader
   // scrolls again or state (extend/approve) changes.
   useEffect(() => {
-    if (!approved || needsExtend || finished || bookText.length === 0) return;
+    if (!approved || needsExtend || needsFunding || finished || bookText.length === 0) return;
     const el = sentinelRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
@@ -145,7 +155,7 @@ export function BookReader({ content, user, onBalanceChange }) {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [approved, needsExtend, finished, unlocked, bookText.length]);
+  }, [approved, needsExtend, needsFunding, finished, unlocked, bookText.length]);
 
   async function ensureSession() {
     if (sessionRef.current) return sessionRef.current;
@@ -179,7 +189,8 @@ export function BookReader({ content, user, onBalanceChange }) {
       if (result?.session?.allowance?.capAtomic) setAllowanceCapUsd(result.session.allowance.capAtomic / 1e6);
 
       if (!result?.ok || !result.served) {
-        if (result?.needsReauth) setNeedsExtend(true);
+        if (result?.needsFunding) setNeedsFunding(true);
+        else if (result?.needsReauth) setNeedsExtend(true);
         else setError(result?.error || "Could not unlock the next page.");
         return; // do NOT advance
       }
@@ -258,8 +269,18 @@ export function BookReader({ content, user, onBalanceChange }) {
         {/* No overflow-hidden here: it would turn this card into the sticky
             containing block and the progress bar would never stick. Corners are
             rounded per-element instead. */}
-        <div className={`relative rounded-2xl border border-white/10 bg-ink-900 ${!approved ? "min-h-[470px]" : ""}`}>
-          {!approved ? <SessionGate mode="approve" defaultAmount={capUsd} max={capMaxUsd} overlay onApprove={handleApprove} /> : null}
+        <div className={`relative rounded-2xl border border-white/10 bg-ink-900 ${checkingFunds || showFundGate || !approved ? "min-h-[470px]" : ""}`}>
+          {/* Funding beats approval: an empty wallet is directed to /top-up
+              instead of an approve gate that would fail on the first page. */}
+          {showFundGate ? (
+            <SessionGate mode="fund" overlay />
+          ) : checkingFunds ? (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[inherit] bg-ink-950/85 p-6 text-sm text-zinc-400 backdrop-blur-sm">
+              Checking your wallet…
+            </div>
+          ) : !approved ? (
+            <SessionGate mode="approve" defaultAmount={capUsd} max={capMaxUsd} overlay onApprove={handleApprove} />
+          ) : null}
 
           <div className="sticky top-16 z-[5] flex items-center justify-between rounded-t-2xl border-b border-white/[0.06] bg-ink-900/90 px-7 py-3 backdrop-blur-sm sm:px-10">
             <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-zinc-500">

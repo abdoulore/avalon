@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { api, formatMoney } from "../lib/api";
 import { getSocket } from "../lib/socket";
 import { usePaymentMode } from "../hooks/usePaymentMode";
+import { useGatewayFunding } from "../hooks/useGatewayFunding";
 import { MoneyMeter } from "./MoneyMeter";
 import { BTN } from "./ui";
 import { AgentBanner } from "./AgentBanner";
@@ -32,12 +33,17 @@ export function VideoViewer({ content, user, onBalanceChange }) {
   const [agentDecision, setAgentDecision] = useState(null);
   const [allowanceCapUsd, setAllowanceCapUsd] = useState(null);
   const [needsExtend, setNeedsExtend] = useState(false);
+  const [needsFunding, setNeedsFunding] = useState(false);
   const [extendBusy, setExtendBusy] = useState(false);
   const [capUsd, setCapUsd] = useState(DEFAULT_CAP_USD);
   const capAtomicRef = useRef(Math.round(DEFAULT_CAP_USD * 1e6));
 
   const { circle, supportsTopUp, network } = usePaymentMode();
   const ratePerSecond = Number(content.pricePerSecondUsd || 0);
+  // Circle mode: is the wallet funded enough to bill even one second? Blocks the
+  // approve gate until funded, so playback never starts on an empty wallet.
+  const { checking: checkingFunds, funded } = useGatewayFunding({ minimumUsd: ratePerSecond });
+  const showFundGate = circle && (!funded || needsFunding);
   // The user picks the cap at approval. Mock can't exceed the local balance;
   // circle has no client-side ceiling (the server clamps to the Gateway pool).
   const capMaxUsd = circle ? Infinity : Math.max(0.01, Number(liveBalance) || 0);
@@ -62,6 +68,7 @@ export function VideoViewer({ content, user, onBalanceChange }) {
     setAgentDecision(null);
     setAllowanceCapUsd(null);
     setNeedsExtend(false);
+    setNeedsFunding(false);
   }, [content._id]);
 
   useEffect(() => {
@@ -82,7 +89,10 @@ export function VideoViewer({ content, user, onBalanceChange }) {
           sessionRef.current = null;
           setHasSession(false);
         }
-        if (payload.needsReauth) {
+        if (payload.needsFunding) {
+          setNeedsFunding(true);
+          setError("");
+        } else if (payload.needsReauth) {
           setNeedsExtend(true);
           setError("");
         } else {
@@ -196,7 +206,10 @@ export function VideoViewer({ content, user, onBalanceChange }) {
           sessionRef.current = null;
           setHasSession(false);
         }
-        if (response?.needsReauth) {
+        if (response?.needsFunding) {
+          setNeedsFunding(true);
+          setError("");
+        } else if (response?.needsReauth) {
           setNeedsExtend(true);
           setError("");
         } else {
@@ -208,10 +221,10 @@ export function VideoViewer({ content, user, onBalanceChange }) {
   }
 
   async function handlePlay() {
-    if (needsExtend || !approved) {
-      // Exhausted or not yet approved: never resume playback. The gate (extend or
-      // approve) is already shown over the player; a play attempt just re-pauses.
-      // This catches keyboard play too, which the visual overlay does not block.
+    if (needsExtend || needsFunding || showFundGate || !approved) {
+      // Unfunded, exhausted, or not yet approved: never resume playback. A gate
+      // (fund / extend / approve) is already shown over the player; a play attempt
+      // just re-pauses. This catches keyboard play too, which the overlay doesn't.
       videoRef.current?.pause();
       setIsPlaying(false);
       return;
@@ -297,11 +310,22 @@ export function VideoViewer({ content, user, onBalanceChange }) {
             for its controls; hold a minimum height until approval. */}
         <div
           className={`relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900 ${
-            !approved || needsExtend ? "min-h-[470px] sm:min-h-0" : ""
+            checkingFunds || showFundGate || !approved || needsExtend ? "min-h-[470px] sm:min-h-0" : ""
           }`}
         >
-          {!approved ? <SessionGate mode="approve" defaultAmount={capUsd} max={capMaxUsd} overlay onApprove={handleApprove} /> : null}
-          {needsExtend ? <SessionGate mode="extend" overlay onApprove={extendAllowance} busy={extendBusy} /> : null}
+          {/* Gate precedence: funding beats approval beats extend, so an unfunded
+              wallet is directed to /top-up instead of a dead approve/extend loop. */}
+          {showFundGate ? (
+            <SessionGate mode="fund" overlay />
+          ) : checkingFunds ? (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[inherit] bg-ink-950/85 p-6 text-sm text-zinc-400 backdrop-blur-sm">
+              Checking your wallet…
+            </div>
+          ) : !approved ? (
+            <SessionGate mode="approve" defaultAmount={capUsd} max={capMaxUsd} overlay onApprove={handleApprove} />
+          ) : needsExtend ? (
+            <SessionGate mode="extend" overlay onApprove={extendAllowance} busy={extendBusy} />
+          ) : null}
           <video
             ref={videoRef}
             controls

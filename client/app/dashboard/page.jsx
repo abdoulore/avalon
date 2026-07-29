@@ -100,11 +100,11 @@ export default function DashboardPage() {
             ) : (
               settlements.map((b) => (
                 <Row key={b._id}>
-                  <Td>{b.contentId?.title || "Untitled"}</Td>
-                  <Td mono>{b.drawCount || 0}</Td>
-                  <Td mono>{formatMoney(b.amount)}</Td>
-                  <Td mono>{formatMoney(b.creatorShare)}</Td>
-                  <Td>
+                  <Td label="Content">{b.contentId?.title || "Untitled"}</Td>
+                  <Td label="Draws" mono>{b.drawCount || 0}</Td>
+                  <Td label="Settled" mono>{formatMoney(b.amount)}</Td>
+                  <Td label="Creator" mono>{formatMoney(b.creatorShare)}</Td>
+                  <Td label="Status">
                     <span
                       className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] ${
                         circle ? "border-brand/40 bg-brand/10 text-brand" : "border-white/15 bg-white/5 text-zinc-400"
@@ -114,7 +114,7 @@ export default function DashboardPage() {
                       {b.gatewayStatus || "settled"}
                     </span>
                   </Td>
-                  <Td mono title={b.batchRef}>
+                  <Td label="Gateway ref" mono title={b.batchRef}>
                     {circle && explorerUrl && isTxHash(b.batchRef) ? (
                       <a
                         href={txUrl(explorerUrl, b.batchRef)}
@@ -128,7 +128,7 @@ export default function DashboardPage() {
                       shortRef(b.batchRef)
                     )}
                   </Td>
-                  <Td>{formatDate(b.timestamp || b.createdAt)}</Td>
+                  <Td label="When">{formatDate(b.timestamp || b.createdAt)}</Td>
                 </Row>
               ))
             )}
@@ -146,12 +146,12 @@ export default function DashboardPage() {
             ) : (
               data.usageSessions.map((s) => (
                 <Row key={s._id}>
-                  <Td>{s.contentId?.title || "Untitled"}</Td>
-                  <Td>{s.contentType}</Td>
-                  <Td mono>{s.contentType === "video" ? `${s.secondsWatched}s` : `${s.pagesRead} pages`}</Td>
-                  <Td mono>{formatMoney(s.totalChargedUsd)}</Td>
-                  <Td>{formatDate(s.startedAt)}</Td>
-                  <Td>{s.endedAt ? formatDate(s.endedAt) : <span className="text-brand">Active</span>}</Td>
+                  <Td label="Content">{s.contentId?.title || "Untitled"}</Td>
+                  <Td label="Type">{s.contentType}</Td>
+                  <Td label="Usage" mono>{s.contentType === "video" ? `${s.secondsWatched}s` : `${s.pagesRead} pages`}</Td>
+                  <Td label="Charged" mono>{formatMoney(s.totalChargedUsd)}</Td>
+                  <Td label="Started">{formatDate(s.startedAt)}</Td>
+                  <Td label="Ended">{s.endedAt ? formatDate(s.endedAt) : <span className="text-brand">Active</span>}</Td>
                 </Row>
               ))
             )}

@@ -55,10 +55,13 @@ export function Field({ label, children, full = false }) {
   );
 }
 
+// A framed, horizontally-scrollable table from sm up; on phones the `av-table`
+// class (see globals.css) reflows each row into a labeled card so nothing gets
+// stranded off-screen. Pass a `label` to each Td matching its column header.
 export function Table({ head, children }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-white/10 bg-ink-850/60">
-      <table className="w-full min-w-[640px] text-sm">
+    <div className="rounded-2xl sm:overflow-x-auto sm:border sm:border-white/10 sm:bg-ink-850/60">
+      <table className="av-table w-full text-sm sm:min-w-[640px]">
         <thead>
           <tr className="border-b border-white/10 text-left">
             {head.map((h) => (
@@ -78,9 +81,9 @@ export function Row({ children }) {
   return <tr className="border-b border-white/[0.06] last:border-0 hover:bg-white/[0.02]">{children}</tr>;
 }
 
-export function Td({ children, mono = false, title }) {
+export function Td({ children, mono = false, title, label }) {
   return (
-    <td className={`px-4 py-3 text-zinc-300 ${mono ? "font-mono tabular-nums" : ""}`} title={title}>
+    <td data-label={label} className={`px-4 py-3 text-zinc-300 ${mono ? "font-mono tabular-nums" : ""}`} title={title}>
       {children}
     </td>
   );

@@ -266,14 +266,14 @@ export default function CreatorPage() {
             ) : (
               content.map((item) => (
                 <Row key={item._id}>
-                  <Td>{item.title}</Td>
-                  <Td>{item.creatorName}</Td>
-                  <Td>{item.type}</Td>
-                  <Td mono>
+                  <Td label="Title">{item.title}</Td>
+                  <Td label="Creator">{item.creatorName}</Td>
+                  <Td label="Type">{item.type}</Td>
+                  <Td label="Rate" mono>
                     {item.type === "video" ? `${formatMoney(item.pricePerSecondUsd)} /s` : `${formatMoney(item.pricePerPageUsd)} /pg`}
                   </Td>
-                  <Td>{item.type === "video" ? `${item.freePreviewSeconds || 0}s` : `${item.freePreviewPages || 0} pages`}</Td>
-                  <Td>{item.isPremium ? "Yes" : "No"}</Td>
+                  <Td label="Preview">{item.type === "video" ? `${item.freePreviewSeconds || 0}s` : `${item.freePreviewPages || 0} pages`}</Td>
+                  <Td label="Premium">{item.isPremium ? "Yes" : "No"}</Td>
                 </Row>
               ))
             )}

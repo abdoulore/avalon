@@ -439,3 +439,61 @@ html, body {
 /* refresh spinner */
 .av-spin { animation: av-spin 0.8s linear infinite; }
 @keyframes av-spin { to { transform: rotate(360deg); } }
+
+/* Responsive data tables: a framed, scrollable table from sm up; on phones each
+   row reflows into a labeled card (label from the cell's data-label) so no column
+   is stranded off-screen. Un-layered on purpose so it beats the cells' Tailwind
+   padding/display utilities at mobile widths. */
+@media (max-width: 639px) {
+  .av-table,
+  .av-table tbody,
+  .av-table tr,
+  .av-table td {
+    display: block;
+    width: 100%;
+  }
+  .av-table thead {
+    display: none;
+  }
+  .av-table tr {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 4px 16px;
+    margin-bottom: 12px;
+  }
+  .av-table tr:last-child {
+    margin-bottom: 0;
+  }
+  .av-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 9px 0;
+    text-align: right;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .av-table tr td:last-child {
+    border-bottom: 0;
+  }
+  .av-table td::before {
+    content: attr(data-label);
+    flex: none;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #71717a;
+  }
+  /* full-width empty-state cell: centered, no label */
+  .av-table td[colspan] {
+    display: block;
+    text-align: center;
+    border-bottom: 0;
+  }
+  .av-table td[colspan]::before {
+    content: none;
+  }
+}

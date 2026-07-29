@@ -16,7 +16,7 @@ export default function TopUpPage() {
   const [user, setUser] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const { circle, network } = usePaymentMode();
+  const { circle, network, unreachable } = usePaymentMode();
 
   useEffect(() => {
     api("/users/me").then((p) => setUser(p.user)).catch(() => {});
@@ -32,6 +32,25 @@ export default function TopUpPage() {
     } catch (err) {
       setError(err.message);
     }
+  }
+
+  if (unreachable) {
+    return (
+      <AppShell>
+        <div className="mx-auto max-w-2xl space-y-6">
+          <header>
+            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-throttle">Funding</span>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tighter text-white sm:text-4xl">Reconnecting…</h1>
+            <p className="mt-2 max-w-[48ch] text-sm leading-relaxed text-zinc-400">
+              We can&apos;t reach the server right now. This page loads your balance automatically once the connection is back.
+            </p>
+          </header>
+          <Card className="flex items-center justify-center gap-2 p-6 text-sm text-zinc-400">
+            <Loader2 size={16} className="av-spin" /> Waiting for the server…
+          </Card>
+        </div>
+      </AppShell>
+    );
   }
 
   return (

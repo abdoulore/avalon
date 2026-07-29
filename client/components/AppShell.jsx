@@ -23,7 +23,7 @@ export function AppShell({ children, requireAuth = true }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
-  const { circle, network, loaded } = usePaymentMode();
+  const { circle, network, loaded, unreachable } = usePaymentMode();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -81,7 +81,15 @@ export function AppShell({ children, requireAuth = true }) {
           </div>
 
           <div className="flex items-center gap-3">
-            {loaded ? (
+            {unreachable ? (
+              <span
+                title="Can't reach the server. Retrying…"
+                className="hidden items-center gap-2 rounded-full border border-throttle/40 bg-throttle/10 px-3 py-1 text-[11px] font-medium text-throttle sm:inline-flex"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-throttle av-ping" />
+                Reconnecting…
+              </span>
+            ) : loaded ? (
               <span
                 title={circle ? "Settling real test USDC on Arc testnet" : "Local mock economy, no chain"}
                 className={`hidden items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium sm:inline-flex ${

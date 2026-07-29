@@ -16,7 +16,7 @@ export default function TopUpPage() {
   const [user, setUser] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const { circle, network, unreachable } = usePaymentMode();
+  const { circle, unreachable } = usePaymentMode();
 
   useEffect(() => {
     api("/users/me").then((p) => setUser(p.user)).catch(() => {});
@@ -69,8 +69,8 @@ export default function TopUpPage() {
             </p>
           </div>
           {circle ? (
-            <span className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/10 px-3.5 py-2 text-sm text-brand">
-              <Wallet size={15} /> Arc testnet · <span className="font-mono">{network}</span>
+            <span className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-brand/30 bg-brand/10 px-3.5 py-2 text-sm text-brand">
+              <Wallet size={15} /> Arc testnet
             </span>
           ) : (
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-2 text-sm text-zinc-200">

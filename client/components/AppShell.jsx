@@ -2,28 +2,35 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, BookOpen, Clapperboard, CreditCard, LogOut, Menu, Receipt, Sparkles, Upload, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { BarChart3, BookOpen, ChevronDown, Clapperboard, CreditCard, LogOut, Menu, Receipt, Sparkles, Upload, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { usePaymentMode } from "../hooks/usePaymentMode";
 import { AvalonMark } from "./Logo";
 import { WakeBanner } from "./WakeBanner";
 
-const LINKS = [
+// Core flows stay inline; the rest fold into a "More" menu so the bar isn't packed.
+const PRIMARY = [
   { href: "/discover", label: "Discover", Icon: Sparkles },
   { href: "/app", label: "Watch & Read", Icon: Clapperboard },
   { href: "/dashboard", label: "Dashboard", Icon: BarChart3 },
-  { href: "/transactions", label: "Transactions", Icon: Receipt },
   { href: "/top-up", label: "Top up", Icon: CreditCard },
+];
+
+const MORE = [
+  { href: "/transactions", label: "Transactions", Icon: Receipt },
   { href: "/creator", label: "Creator", Icon: Upload },
   { href: "/docs", label: "Docs", Icon: BookOpen },
 ];
+
+// The mobile sheet lists everything, no dropdown nesting on a small screen.
+const LINKS = [...PRIMARY, ...MORE];
 
 export function AppShell({ children, requireAuth = true }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
-  const { circle, network, loaded, unreachable } = usePaymentMode();
+  const { circle, loaded, unreachable } = usePaymentMode();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -62,10 +69,10 @@ export function AppShell({ children, requireAuth = true }) {
             Avalon
           </Link>
 
-          {/* Seven links need real width; anything under lg gets the sheet menu. */}
+          {/* Core links inline, the rest in a menu; anything under lg gets the sheet. */}
           <div className="hidden items-center gap-1 lg:flex">
-            {LINKS.map(({ href, label, Icon }) => {
-              const active = pathname === href || (href === "/app" && pathname === "/app");
+            {PRIMARY.map(({ href, label, Icon }) => {
+              const active = pathname === href;
               return (
                 <Link
                   key={href}
@@ -78,13 +85,14 @@ export function AppShell({ children, requireAuth = true }) {
                 </Link>
               );
             })}
+            <MoreMenu items={MORE} pathname={pathname} />
           </div>
 
           <div className="flex items-center gap-3">
             {unreachable ? (
               <span
                 title="Can't reach the server. Retrying…"
-                className="hidden items-center gap-2 rounded-full border border-throttle/40 bg-throttle/10 px-3 py-1 text-[11px] font-medium text-throttle sm:inline-flex"
+                className="hidden flex-none items-center gap-2 whitespace-nowrap rounded-full border border-throttle/40 bg-throttle/10 px-3 py-1 text-[11px] font-medium text-throttle sm:inline-flex"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-throttle av-ping" />
                 Reconnecting…
@@ -92,12 +100,12 @@ export function AppShell({ children, requireAuth = true }) {
             ) : loaded ? (
               <span
                 title={circle ? "Settling real test USDC on Arc testnet" : "Local mock economy, no chain"}
-                className={`hidden items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium sm:inline-flex ${
+                className={`hidden flex-none items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-medium sm:inline-flex ${
                   circle ? "border-brand/40 bg-brand/10 text-brand" : "border-white/10 bg-white/5 text-zinc-400"
                 }`}
               >
                 <span className={`h-1.5 w-1.5 rounded-full ${circle ? "bg-brand av-ping" : "bg-zinc-500"}`} />
-                {circle ? `Arc testnet · ${network}` : "Mock mode"}
+                {circle ? "Arc testnet" : "Mock mode"}
               </span>
             ) : null}
             {user ? (
@@ -163,6 +171,68 @@ export function AppShell({ children, requireAuth = true }) {
 
       <main className="mx-auto max-w-[1200px] px-5 pb-24 pt-24 sm:px-8">{children}</main>
       <WakeBanner />
+    </div>
+  );
+}
+
+// Click-to-open menu for the secondary links, so the top bar stays uncrowded.
+// Closes on outside click or Escape; the trigger stays highlighted while a
+// child route is active so you can still tell where you are.
+function MoreMenu({ items, pathname }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const activeChild = items.some((i) => i.href === pathname);
+
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm transition-colors ${
+          open || activeChild ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-white"
+        }`}
+      >
+        More <ChevronDown size={15} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-full mt-2 min-w-[186px] overflow-hidden rounded-xl border border-white/10 bg-ink-950/95 p-1.5 shadow-xl shadow-black/50 backdrop-blur-md"
+        >
+          {items.map(({ href, label, Icon }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+                  active ? "bg-white/10 text-white" : "text-zinc-300 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <Icon size={15} className={active ? "text-brand" : ""} /> {label}
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { attachSocketServer } from "./realtime/socketServer.js";
 await connectDatabase();
 
 const httpServer = createServer(app);
-attachSocketServer(httpServer, { corsOrigin: env.clientOrigin });
+attachSocketServer(httpServer, { corsOrigin: env.clientOrigins });
 
 httpServer.listen(env.port, () => {
   console.log(`Avalon API listening on http://localhost:${env.port}`);

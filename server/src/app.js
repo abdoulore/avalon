@@ -15,7 +15,7 @@ import { userRouter } from "./routes/userRoutes.js";
 export const app = express();
 
 const localOrigins = new Set([
-  env.clientOrigin,
+  ...env.clientOrigins,
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "http://[::1]:3000",

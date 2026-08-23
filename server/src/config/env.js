@@ -7,10 +7,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 dotenv.config();
 
+// CLIENT_ORIGIN is a comma-separated allowlist so one backend can serve several
+// front-end origins at once (custom domain + www + the Vercel URL). Whitespace
+// and trailing slashes are stripped; the REST CORS middleware and the Socket.IO
+// handshake both read the array.
+const clientOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:3000")
+  .split(",")
+  .map((o) => o.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+
 export const env = {
   port: Number(process.env.PORT || 4000),
   mongoUri: process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/avalon",
-  clientOrigin: process.env.CLIENT_ORIGIN || "http://localhost:3000",
+  clientOrigins,
+  clientOrigin: clientOrigins[0], // first entry, for anything expecting a single value
   paymentMode: process.env.PAYMENT_MODE || "mock",
   // Gates operator-only endpoints (x-admin-token header) — currently just
   // GET /api/ledger/platform. Fail-closed: when unset, they return 503.
